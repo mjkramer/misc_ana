@@ -1,0 +1,149 @@
+#+PROPERTY: header-args:jupyter-python+ :async t
+#+PROPERTY: header-args:jupyter-python+ :session /global/u2/m/mkramer/.local/share/jupyter/runtime/kernel-42191.json
+
+#+begin_src jupyter-python :results silent
+%matplotlib inline
+#+end_src
+
+#+begin_src jupyter-python :results silent
+import matplotlib.pyplot as plt
+from itertools import islice
+from functools import lru_cache
+import os
+#+end_src
+
+#+begin_src jupyter-python :results silent
+plt.rcParams["figure.figsize"] = [8, 6]
+plt.rcParams["axes.labelsize"] = "x-large"
+plt.rcParams["xtick.labelsize"] = "large"
+plt.rcParams["ytick.labelsize"] = "large"
+plt.rcParams["axes.titlesize"] = "xx-large"
+plt.rcParams["legend.fontsize"] = "xx-large"
+#+end_src
+
+#+begin_src jupyter-python :results silent
+ROWS = {
+    1: 'NumIBDs',
+    2: 'Livedays',
+    3: 'VetoEff',
+    4: 'MultEff',
+    9: 'DailyTotBkg',
+    11: 'DailyAcc',
+    13: 'DailyLi9',
+    15: 'DailyFastN',
+    17: 'DailyAmC',
+    19: 'DailyAlphaN'
+}
+
+PATHSPECS = {
+    'LBNL': '/global/u2/m/mkramer/mywork/ThesisAnalysis/samples/beda.mine/example/LBNL/Theta13-inputs_P17B_inclusive_%s_LBNL.txt',
+    'IbdSel': '/global/u2/m/mkramer/mywork/ThesisAnalysis/samples/beda.mine/example/yolo2/Theta13-inputs_P17B_inclusive_%s.txt'
+}
+
+SPLIT_NEAR_FAR = ['NumIBDs']
+
+def path_of(phasename, selname):
+    assert selname in PATHSPECS
+    assert phasename in ['6ad', '8ad', '7ad']
+    return PATHSPECS[selname] % phasename
+
+def has_err(rowname):
+    return rowname.startswith('Daily')
+
+@lru_cache()
+def read_text(phasename, selname):
+    fname = path_of(phasename, selname)
+    result = {}
+
+    def not_comment(line):
+        return not line.startswith('#')
+
+    lines = filter(not_comment, open(fname))
+    lines = islice(lines, 3, None)  # don't want first 3 data lines
+
+    for line in lines:
+        parts = line.split()
+        rowcode = int(parts[1])
+        if rowcode in ROWS:
+            rowname = ROWS[rowcode]
+        elif rowcode-1 in ROWS and has_err(ROWS[rowcode-1]):
+            rowname = ROWS[rowcode-1] + 'Unc'
+        else:
+            continue
+        vals = [float(_) for _ in parts[2:10]]
+        result[rowname] = vals
+
+    return result
+
+def get_xy(rowname, selname, phasename=None, halls='both', offset=0):
+    xmin, xmax = (0, 3) if halls == 'near' \
+        else (4, 7) if halls == 'far' \
+             else (0, 7)
+
+    xs, ys = [], []
+    yerr = [] if has_err(rowname) else None
+    phases = ['6ad', '8ad', '7ad'] if phasename is None else [phasename]
+
+    for phase in phases:
+        data = read_text(phase, selname)
+        yerr0 = data[rowname+'Unc']
+        for x in range(8):
+            y = data[rowname][x]
+            if x < xmin or x > xmax:
+                continue
+            if y != 0 or phasename is None:
+                xs.append(x + offset)
+                ys.append(y)
+                if yerr is not None:
+                    yerr.append(yerr0[x])
+
+    return xs, ys, yerr
+
+def plot(ax, rowname, selname, phasename=None, halls='both', offset=0):
+    xs, ys, yerr = get_xy(rowname, selname, phasename=phasename, halls=halls, offset=offset)
+
+    ax.errorbar(xs, ys, yerr=yerr, fmt='o', label=selname)
+
+    ax.set_xticks(range(8))
+    ax.set_xticklabels(['AD1', 'AD2', 'AD3', 'AD8', 'AD4', 'AD5', 'AD6', 'AD7'])
+    phasetitle = f', {phasename.upper()} period' if phasename else ''
+    halltitle = (f', {halls} hall' if halls != 'both' else '') + \
+        ('s' if halls == 'near' else '')
+    ax.set_title(f'{rowname}{phasetitle}')
+
+def compare(rowname, phasename=None, halls='both'):
+    fig, ax = plt.subplots()
+    for i, selname in enumerate(PATHSPECS):
+        offset = i * 0.2
+        plot(ax, rowname, selname, phasename=phasename, halls=halls, offset=offset)
+    fig.legend()
+    return fig
+
+def compare_all():
+    os.system('mkdir -p gfx')
+    with open('CompareSel_gfx.org', 'w') as f:
+        for rowname in ROWS.values():
+            # for phasename in ['6ad', '7ad', '8ad']:
+            for phasename in [None]:
+                fname = f'gfx/compare_{rowname}_{phasename}.png'
+                fig = compare(rowname, phasename)
+                # fig.show()      # b/c matplotlib is stupid
+                fig.savefig(fname)
+                f.write(f'[[file:{fname}]]\n')
+                # plt.pause(0.05)  # b/c matplotlib is stupid
+                # os.system(f'mogrify -negate {fname}')
+#+end_src
+
+#+begin_src jupyter-python :results silent
+compare_all()
+#+end_src
+
+#+begin_src jupyter-python :results raw drawer
+compare('DailyLi9', phasename='6ad');
+#+end_src
+
+#+RESULTS:
+:results:
+# Out[229]:
+[[file:./obipy-resources/ceeqGF.png]]
+:end:
