@@ -41,8 +41,9 @@ PATHSPECS = {
 }
 
 SPLIT_NEAR_FAR = ['NumIBDs']
+SUM_HALLS = ['NumIBDs', 'Livedays']
 
-def path_of(phasename, selname):
+def path_of(selname, phasename):
     assert selname in PATHSPECS
     assert phasename in ['6ad', '8ad', '7ad']
     return PATHSPECS[selname] % phasename
@@ -51,8 +52,8 @@ def has_err(rowname):
     return rowname.startswith('Daily')
 
 @lru_cache()
-def read_text(phasename, selname):
-    fname = path_of(phasename, selname)
+def get_data(selname, phasename):
+    fname = path_of(selname, phasename)
     result = {}
 
     def not_comment(line):
@@ -75,27 +76,45 @@ def read_text(phasename, selname):
 
     return result
 
+def livetime(idet, selname, phasename):
+    data = get_data(selname, phasename)
+    return data['Livedays'][idet]
+
 def get_xy(rowname, selname, phasename=None, halls='both', offset=0):
     xmin, xmax = (0, 3) if halls == 'near' \
         else (4, 7) if halls == 'far' \
              else (0, 7)
 
-    xs, ys = [], []
-    yerr = [] if has_err(rowname) else None
+    xs = [_ + offset for _ in range(8)]
+    ys = [0] * 8
+    yerr = [0] * 8 if has_err(rowname) else None
     phases = ['6ad', '8ad', '7ad'] if phasename is None else [phasename]
 
+    weightsum = [0] * 8
     for phase in phases:
-        data = read_text(phase, selname)
+        data = get_data(selname, phase)
+        ys0 = data[rowname]
         yerr0 = data[rowname+'Unc']
-        for x in range(8):
-            y = data[rowname][x]
-            if x < xmin or x > xmax:
+        for i in range(8):
+            if i < xmin or i > xmax:
                 continue
-            if y != 0 or phasename is None:
-                xs.append(x + offset)
-                ys.append(y)
-                if yerr is not None:
-                    yerr.append(yerr0[x])
+            weight = 1 if rowname in SUM_HALLS else livetime(i, selname, phase)
+            weightsum[i] += weight
+            ys[i] += ys0[i] * weight
+            if yerr is not None:
+                yerr[i] += yerr0[i] * weight
+
+    if rowname in SUM_HALLS:
+        weightsum = [1] * 8
+
+    xs0, ys0, yerr0 = xs, ys, yerr
+    xs, ys, yerr = [], [], []
+    for i in range(8):
+        if ys0[i] != 0:
+            xs.append(xs0[i])
+            ys.append(ys0[i] / weightsum[i])
+            if yerr0 is not None:
+                yerr.append(yerr0[i] / weightsum[i])
 
     return xs, ys, yerr
 
@@ -139,11 +158,11 @@ compare_all()
 #+end_src
 
 #+begin_src jupyter-python :results raw drawer
-compare('DailyLi9', phasename='6ad');
+compare('DailyLi9');
 #+end_src
 
 #+RESULTS:
 :results:
-# Out[229]:
-[[file:./obipy-resources/ceeqGF.png]]
+# Out[245]:
+[[file:./obipy-resources/x5qTNV.png]]
 :end:
