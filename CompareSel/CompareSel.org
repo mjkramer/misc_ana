@@ -37,11 +37,11 @@ ROWS = {
 
 PATHSPECS = {
     'LBNL': '/global/u2/m/mkramer/mywork/ThesisAnalysis/samples/beda.mine/example/LBNL/Theta13-inputs_P17B_inclusive_%s_LBNL.txt',
-    'IbdSel': '/global/u2/m/mkramer/mywork/ThesisAnalysis/samples/beda.mine/example/yolo2/Theta13-inputs_P17B_inclusive_%s.txt'
+    'Matt': '/global/u2/m/mkramer/mywork/ThesisAnalysis/samples/beda.mine/example/yolo2/Theta13-inputs_P17B_inclusive_%s.txt'
 }
 
 SPLIT_NEAR_FAR = ['NumIBDs']
-SUM_HALLS = ['NumIBDs', 'Livedays']
+SUM_PHASES = ['NumIBDs', 'Livedays']
 
 def path_of(selname, phasename):
     assert selname in PATHSPECS
@@ -96,20 +96,20 @@ def get_xy(rowname, selname, phasename=None, halls='both', offset=0):
         ys0 = data[rowname]
         yerr0 = data[rowname+'Unc'] if yerr is not None else None
         for i in range(8):
-            if i < xmin or i > xmax:
-                continue
-            weight = 1 if rowname in SUM_HALLS else livetime(i, selname, phase)
+            weight = 1 if rowname in SUM_PHASES else livetime(i, selname, phase)
             weightsum[i] += weight
             ys[i] += ys0[i] * weight
             if yerr is not None:
                 yerr[i] += yerr0[i] * weight
 
-    if rowname in SUM_HALLS:
+    if rowname in SUM_PHASES:
         weightsum = [1] * 8
 
     xs0, ys0, yerr0 = xs, ys, yerr
     xs, ys, yerr = [], [], [] if yerr0 else None
     for i in range(8):
+        if i < xmin or i > xmax:
+            continue
         if ys0[i] != 0:
             xs.append(xs0[i])
             ys.append(ys0[i] / weightsum[i])
@@ -123,17 +123,22 @@ def plot(ax, rowname, selname, phasename=None, halls='both', offset=0):
 
     ax.errorbar(xs, ys, yerr=yerr, fmt='o', label=selname)
 
-    ax.set_xticks(range(8))
-    ax.set_xticklabels(['AD1', 'AD2', 'AD3', 'AD8', 'AD4', 'AD5', 'AD6', 'AD7'])
+    nearticks, farticks = [0, 1, 2, 3], [4, 5, 6, 7]
+    neardets, fardets = ['AD1', 'AD2', 'AD3', 'AD8'], ['AD4', 'AD5', 'AD6', 'AD7']
+    xticks = nearticks if halls == 'near' else (farticks if halls == 'far' else nearticks + farticks)
+    xdets = neardets if halls == 'near' else (fardets if halls == 'far' else neardets + fardets)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xdets)
+    ax.set_xlim(xticks[0] - 0.5, xticks[-1] + 0.5)
     phasetitle = f', {phasename.upper()} period' if phasename else ''
     halltitle = (f', {halls} hall' if halls != 'both' else '') + \
         ('s' if halls == 'near' else '')
-    ax.set_title(f'{rowname}{phasetitle}')
+    ax.set_title(f'{rowname}{halltitle}{phasetitle}')
 
 def compare(rowname, phasename=None, halls='both'):
     fig, ax = plt.subplots()
     for i, selname in enumerate(PATHSPECS):
-        offset = i * 0.2
+        offset = i * 0.2 - 0.1
         plot(ax, rowname, selname, phasename=phasename, halls=halls, offset=offset)
     fig.legend()
     return fig
@@ -141,12 +146,14 @@ def compare(rowname, phasename=None, halls='both'):
 def compare_all(split_phases=False):
     os.system('mkdir -p gfx')
     phases = ['6ad', '7ad', '8ad'] if split_phases else [None]
-    with open('CompareSel_gfx.org', 'w') as f:
+    tag = 'split' if split_phases else 'comb'
+    with open(f'CompareSel_{tag}_gfx.org', 'w') as f:
         for rowname in ROWS.values():
             for phasename in phases:
                 hallsets = ['near', 'far'] if rowname in SPLIT_NEAR_FAR else ['both']
                 for hallset in hallsets:
-                    fname = f'gfx/compare_{rowname}_{phasename}_{hallset}.png'
+                    phname = phasename if phasename else 'AllPhases'
+                    fname = f'gfx/compare_{rowname}_{phname}_{hallset}.png'
                     fig = compare(rowname, phasename, halls=hallset)
                     # fig.show()      # b/c matplotlib is stupid
                     fig.savefig(fname)
@@ -156,15 +163,16 @@ def compare_all(split_phases=False):
 #+end_src
 
 #+begin_src jupyter-python :results silent
-compare_all()
+compare_all(split_phases=False)
+compare_all(split_phases=True)
 #+end_src
 
 #+begin_src jupyter-python :results raw drawer
-compare('DailyLi9');
+compare('NumIBDs', halls='far');
 #+end_src
 
 #+RESULTS:
 :results:
-# Out[256]:
-[[file:./obipy-resources/Dpa6Hr.png]]
+# Out[273]:
+[[file:./obipy-resources/8TBbSw.png]]
 :end:
