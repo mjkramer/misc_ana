@@ -1,0 +1,5 @@
+* Hierarchical / multi-level axis in matplotlib
+- [[https://stackoverflow.com/questions/37934242/hierarchical-axis-labeling-in-matplotlib-python][Hierarchical axis labeling in matplotlib (Python) - Stack Overflow]]
+- [[https://github.com/matplotlib/matplotlib/issues/6321][matplotlib/matplotlib#6321 Feature Request: Label Grouping and Multi-Level Ax...]]
+- [[https://stackoverflow.com/questions/58854335/how-to-label-y-ticklabels-as-group-category-in-seaborn-clustermap/58915100#58915100][python - How to label Y ticklabels as group/category in seaborn clustermap? -...]]
+- google matplotlib hierarchical axis
