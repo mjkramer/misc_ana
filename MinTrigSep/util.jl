@@ -1,3 +1,5 @@
+using TypedTables
+
 # original definition in UpROOT/ttree.jl
 function read_ttree(tree::TTree, branchnames::Array{<:AbstractString})
     tree_data = UpROOT.pyobj(tree).arrays(branchnames)
@@ -13,7 +15,7 @@ function read_ttree(tree::TTree, branchnames::Array{<:AbstractString})
 end
 
 # added all-branches read_ttree
-branches_of(tree::TTree) = [String(k) for k in keys(t[1])]
+branches_of(tree::TTree) = [String(k) for k in keys(tree[1])]
 read_ttree(tree::TTree) = read_ttree(tree, branches_of(tree))
 
 # fix needed to make Table from CalibStats

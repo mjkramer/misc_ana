@@ -1,5 +1,9 @@
 using DataFrames
 using UpROOT
+using Plots
+using Printf
+
+pyplot()
 
 include("util.jl")
 
@@ -22,8 +26,28 @@ end
 function timediffs(df, det)
     dfp = df[df.det .== det, :]
     sel = dfp[!, [:s, :ns]]
-    # mtx = convert(Matrix, sel)
-    mtx = Matrix(sel)
+    mtx = convert(Matrix, sel)
     deltas2d = mtx[2:end, :] - mtx[1:end-1, :]
     convert(Int, 1e9) * deltas2d[:, 1] + deltas2d[:, 2]
+end
+
+df = read_times(f_mine)
+dt = timediffs(df, 1)
+
+function plottimes(dt)
+    loglim = (2, 8)
+    bins = [10^x for x in loglim[1]:0.025:loglim[2]]
+    ticks = [10^x for x in loglim[1]:0.5:loglim[2]]
+    labels = [@sprintf("%.2g", t) for t in ticks]
+
+    stephist(dt,
+             normalize = :density,
+             bins = bins,
+             xlim = (bins[1], bins[end]),
+             xticks = (ticks, labels),
+             xscale = :log10,
+             yscale = :log10,
+             legend = false,
+             title = "Time difference between triggers",
+             xlabel = "nanosec")
 end

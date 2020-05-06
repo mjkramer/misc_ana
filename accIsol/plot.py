@@ -7,7 +7,7 @@ import pandas as pd
 def read_results():
     return pd.read_csv("tables/results.txt", sep=r"\s+")
 
-def _plot_seq(df, outer, middle, inner, site=1, det=1, day=1):
+def _plot_seq(df, outer, middle, inner, site=1, det=1, day=1, col='acc_day'):
     fig = plt.figure()
     ax1 = SubplotHost(fig, 111)
     fig.add_subplot(ax1)
@@ -22,7 +22,7 @@ def _plot_seq(df, outer, middle, inner, site=1, det=1, day=1):
             for i, iv in enumerate(sortuniq(df[inner])):
                 q = f"{outer} == {ov} and {middle} == {mv} and {inner} == {iv}"
                 xss[i].append(j)
-                yss[i].append(df.query(q).iloc[0].acc_day)
+                yss[i].append(df.query(q).iloc[0][col])
                 j += 1
 
     labels = [f"{inner} = {iv}" for iv in sortuniq(df[inner])]
@@ -33,7 +33,7 @@ def _plot_seq(df, outer, middle, inner, site=1, det=1, day=1):
     ax1.set_xticks([1.5, 5.5, 9.5,  13.5, 17.5, 21.5,
                     25.5, 29.5, 33.5,  37.5, 41.5, 45.5])
     ax1.set_xticklabels(4*[f"{mv}" for mv in sortuniq(df[middle])])
-    ax1.yaxis.set_label_text("Acc/day")
+    ax1.yaxis.set_label_text(col)
 
     ax2 = ax1.twiny()
     offset = 0, -25
@@ -49,7 +49,7 @@ def _plot_seq(df, outer, middle, inner, site=1, det=1, day=1):
 
     plt.legend()
     # plt.ylabel("Acc/day")
-    plt.title(f"Calculated acc. rate vs. singles isolation cuts, EH{site}-AD{det}, day {day}")
+    plt.title(f"Calculated {col} vs. singles isolation cuts, EH{site}-AD{det}, day {day}")
 
 def plot_seq(df, code=312, **kwargs):
     # 123 -> [1, 2, 3]

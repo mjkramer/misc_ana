@@ -1,0 +1,61 @@
+# Results for knl/100/KEO:
+76 tasks: 4.12 node-seconds per file
+84 tasks: 4.56 node-seconds per file
+
+# Results for knl/100/TSh:
+16 tasks: 8.50 node-seconds per file
+32 tasks: 5.26 node-seconds per file
+48 tasks: 4.57 node-seconds per file
+58 tasks: 4.94 node-seconds per file
+68 tasks: 4.89 node-seconds per file
+78 tasks: 3.55 node-seconds per file
+88 tasks: 5.71 node-seconds per file
+
+# Results for knl/100/h2G:
+ 8 tasks: SLOW
+16 tasks: 9.98 node-seconds per file
+32 tasks: 5.74 node-seconds per file
+48 tasks: 4.46 node-seconds per file
+68 tasks: 4.10 node-seconds per file
+
+# Results for knl/100/jL7:
+16 tasks: 10.07 node-seconds per file
+32 tasks: 5.26 node-seconds per file
+48 tasks: 5.47 node-seconds per file
+58 tasks: 5.18 node-seconds per file
+68 tasks: 5.26 node-seconds per file
+78 tasks: 5.89 node-seconds per file
+88 tasks: 5.85 node-seconds per file
+
+# Results for knl/1000/1BR:
+108 tasks: 2.16 node-seconds per file
+120 tasks: 2.35 node-seconds per file
+150 tasks: 3.01 node-seconds per file
+180 tasks: 1.70 node-seconds per file
+
+# Results for knl/1000/Qvk:
+150 tasks: 1.68 node-seconds per file
+180 tasks: 2.24 node-seconds per file
+
+# Results for knl/1000/fB3:
+58 tasks: 2.18 node-seconds per file
+68 tasks: 1.94 node-seconds per file
+78 tasks: 1.87 node-seconds per file
+88 tasks: 1.80 node-seconds per file
+98 tasks: 2.08 node-seconds per file
+108 tasks: 1.76 node-seconds per file
+120 tasks: 1.72 node-seconds per file
+
+# Results for knl/1000/waG:
+108 tasks: 2.04 node-seconds per file
+120 tasks: 1.96 node-seconds per file
+150 tasks: 2.23 node-seconds per file
+180 tasks: 1.90 node-seconds per file
+
+# Results for knl/500/At0:
+32 tasks: 3.86 node-seconds per file
+48 tasks: 2.78 node-seconds per file
+58 tasks: 2.36 node-seconds per file
+68 tasks: 2.09 node-seconds per file
+78 tasks: 2.07 node-seconds per file
+88 tasks: 2.02 node-seconds per file

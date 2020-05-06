@@ -1,28 +1,15 @@
-#+PROPERTY: header-args:jupyter-python+ :async t
-#+PROPERTY: header-args:jupyter-python+ :session /global/u2/m/mkramer/.local/share/jupyter/runtime/kernel-42191.json
-#+PROPERTY: header-args :tangle yes
-
-#+begin_src jupyter-python :results silent
-%matplotlib inline
-#+end_src
-
-#+begin_src jupyter-python :results silent
 import matplotlib.pyplot as plt
 from itertools import islice
 from functools import lru_cache
 import os
-#+end_src
 
-#+begin_src jupyter-python :results silent
 plt.rcParams["figure.figsize"] = [8, 6]
 plt.rcParams["axes.labelsize"] = "x-large"
 plt.rcParams["xtick.labelsize"] = "large"
 plt.rcParams["ytick.labelsize"] = "large"
 plt.rcParams["axes.titlesize"] = "xx-large"
 plt.rcParams["legend.fontsize"] = "xx-large"
-#+end_src
 
-#+begin_src jupyter-python :results silent
 ROWS = {
     1: 'NumIBDs',
     2: 'Livedays',
@@ -161,19 +148,8 @@ def compare_all(split_phases=False):
                     f.write(f'[[file:{fname}]]\n')
                     # plt.pause(0.05)  # b/c matplotlib is stupid
                     # os.system(f'mogrify -negate {fname}')
-#+end_src
 
-#+begin_src jupyter-python :results silent
 compare_all(split_phases=False)
 compare_all(split_phases=True)
-#+end_src
 
-#+begin_src jupyter-python :results raw drawer
 compare('NumIBDs', halls='far');
-#+end_src
-
-#+RESULTS:
-:results:
-# Out[273]:
-[[file:./obipy-resources/8TBbSw.png]]
-:end:
