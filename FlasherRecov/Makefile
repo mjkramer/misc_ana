@@ -1,30 +1,17 @@
 # Inspired by https://gist.github.com/maxtruxa/4b3929e118914ccef057f8a05c614b0f
 
-ALL_PRODUCTS := common stage1 stage2
+ALL_PRODUCTS := flasher_recov
 
-common_DIRS := SelectorFramework/core common
-stage1_DIRS := stage1
-stage2_DIRS := stage2
+flasher_recov_DIRS := . SelectorFramework/core
 
 BUILD_DIR ?= _build
 
 .PHONY: all
 all: $(ALL_PRODUCTS)
 
-.PHONY: common
-common: $(BUILD_DIR)/common.so
-common: LIBNAME = common
-
-.PHONY: stage1
-stage1: $(BUILD_DIR)/stage1.exe $(BUILD_DIR)/stage1.so
-stage1: LIBNAME = stage1
-
-.PHONY: stage2
-stage2: $(BUILD_DIR)/stage2.exe $(BUILD_DIR)/stage2.so
-stage2: LIBNAME = stage2
-
-.PHONY: recalc
-recalc: $(BUILD_DIR)/recalc.exe stage2
+.PHONY: flasher_recov
+flasher_recov: $(BUILD_DIR)/flasher_recov.exe $(BUILD_DIR)/flasher_recov.so
+flasher_recov: LIBNAME = flasher_recov
 
 CC := g++
 LD := $(CC)
@@ -50,8 +37,8 @@ DEPS_DIR  := $(CACHE_DIR)/deps
 
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPS_DIR)/$*.dep.tmp
 
-sources_of = $(shell find $($(1)_DIRS) -name '*.cc')
-headers_of = $(shell find $($(1)_DIRS) -name '*.hh')
+sources_of = $(shell find $($(1)_DIRS) -maxdepth 1 -name '*.cc')
+headers_of = $(shell find $($(1)_DIRS) -maxdepth 1 -name '*.hh')
 
 $(foreach p,$(ALL_PRODUCTS),$(eval $(p)_SOURCES := $(call sources_of,$(p))))
 $(foreach p,$(ALL_PRODUCTS),$(eval $(p)_HEADERS := $(call headers_of,$(p))))
@@ -73,16 +60,16 @@ $(shell mkdir -p $(sort $(all_cache_dirs)))
 .PRECIOUS: $(OBJS_DIR)/%.o
 $(OBJS_DIR)/%.o: %.cc $(DEPS_DIR)/%.dep
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
-	mv -f $(DEPS_DIR)/$*.dep.tmp $(DEPS_DIR)/$*.dep
+	@mv -f $(DEPS_DIR)/$*.dep.tmp $(DEPS_DIR)/$*.dep
 	@# ensure .o is newer than .dep:
-	touch $@
+	@touch $@
 
 # It seems that dicts don't work unless they follow this exact filename scheme.
 .PRECIOUS: $(DICTS_DIR)/%_hh_ACLiC_dict.o
 $(DICTS_DIR)/%_hh_ACLiC_dict.o: %.hh $(DICTS_DIR)/%_LinkDef.h
 	rootcling -f $(DICTS_DIR)/$*_hh_ACLiC_dict.cxx -multiDict -s $(LIBNAME) $(EXTRA_INC) $^
 	$(CC) $(CFLAGS) -c -I. $(DICTS_DIR)/$*_hh_ACLiC_dict.cxx -o $@
-	mv $(LIBNAME)_$(notdir $*)_hh_ACLiC_dict_rdict.pcm $(BUILD_DIR)
+	@mv $(LIBNAME)_$(notdir $*)_hh_ACLiC_dict_rdict.pcm $(BUILD_DIR)
 
 $(DICTS_DIR)/%_LinkDef.h:
 	$(shell sed 's!PLACEHOLDER!$*.hh!' cling/LinkDef.h > $@)
@@ -92,7 +79,7 @@ $(DICTS_DIR)/%_LinkDef.h:
 $(BUILD_DIR)/%.so: $$($$*_OBJS) $$($$*_DICTS)
 	$(LD) $(LDFLAGS) $^ -shared -o $@
 
-$(BUILD_DIR)/%.exe: $$*/$$*_exe.cpp $(BUILD_DIR)/$$*.so $(BUILD_DIR)/common.so
+$(BUILD_DIR)/%.exe: $$*_exe.cpp $(BUILD_DIR)/$$*.so $(BUILD_DIR)/common.so
 	$(CC) $(CFLAGS) $(LDFLAGS) -L$(BUILD_DIR) -l:$*.so -l:common.so $< -o $@
 
 .PHONY: clean

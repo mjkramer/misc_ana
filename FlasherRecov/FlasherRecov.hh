@@ -18,14 +18,14 @@ public:
   Status consume(const EventReader::Data& e) override;
   void finalize(Pipeline& pipeline) override;
 
-private:
-  struct Trig {
+  struct Trig {                 // should be private but rootcling no likey
     Det det;
     Time t;
     float energy;
     bool flasher;
   };
 
+private:
   bool isFlasher(const EventReader::Data& e);
   void flushPending();
   void process(const Trig& trig);

@@ -21,7 +21,7 @@ public:
   Status consume(const EventReader::Data& e) override;
   VetoStatus vetoStatus(Det det, Time t);
 
-private:
+// private:
   enum class Type { WP, AD, Shower };
 
   struct Muon {
@@ -30,5 +30,6 @@ private:
     Time t;
   };
 
+private:
   RingBuf<Muon> muons{100};
 };
