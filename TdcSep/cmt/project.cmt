@@ -1,0 +1,7 @@
+project TdcSep
+
+use dybgaudi
+
+build_strategy with_installarea
+structure_strategy without_version_directory
+setup_strategy root

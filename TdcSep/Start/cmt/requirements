@@ -1,0 +1,17 @@
+package Start
+
+# All packages needed ...
+use GaudiAlg       *
+use DybPolicy      * 
+use DybROOT        *  External
+
+
+
+include_path none
+
+library Start *.cc
+
+apply_pattern component_library library=Start
+
+apply_pattern install_scripts
+apply_pattern install_python_modules
