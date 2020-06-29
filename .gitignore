@@ -1,3 +1,4 @@
 *.png
 *_gfx.org
 obipy-resources
+.ccls-cache
