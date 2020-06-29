@@ -79,8 +79,8 @@ $(DICTS_DIR)/%_LinkDef.h:
 $(BUILD_DIR)/%.so: $$($$*_OBJS) $$($$*_DICTS)
 	$(LD) $(LDFLAGS) $^ -shared -o $@
 
-$(BUILD_DIR)/%.exe: $$*_exe.cpp $(BUILD_DIR)/$$*.so $(BUILD_DIR)/common.so
-	$(CC) $(CFLAGS) $(LDFLAGS) -L$(BUILD_DIR) -l:$*.so -l:common.so $< -o $@
+$(BUILD_DIR)/%.exe: $$*_exe.cpp $(BUILD_DIR)/$$*.so
+	$(CC) $(CFLAGS) $(LDFLAGS) $(abspath $(BUILD_DIR))/$*.so $< -o $@
 
 .PHONY: clean
 clean:
