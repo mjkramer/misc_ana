@@ -78,7 +78,6 @@ void FlasherRecov::finalize(Pipeline &pipeline)
 {
   flushPending();
 
-  for (Det det : util::ADsFor(gSite, gPhase)) {
+  for (Det det : util::ADsFor(gSite, gPhase))
     hists[det]->Write();
-  }
 }
