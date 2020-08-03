@@ -25,27 +25,6 @@ void init_tree(TTree* results)
   results->GetEntry(0);
 }
 
-// Get the livetime-weighted mean of a quantity (e.g. an efficiency). We pass a
-// *pointer* to the daily value in case it's a tree branch that updates every
-// time we call GetEntry.
-// float mean_of(TTree* results, int detector, float* dailyVal_ptr)
-// {
-//   float wtd_sum = 0;
-//   float tot_livetime = 0;
-
-//   for (int i = 0; i < results->GetEntries(); ++i) {
-//     results->GetEntry(i);
-
-//     if (br_detector != detector)
-//       continue;
-
-//     wtd_sum += *dailyVal_ptr * br_livetime_s;
-//     tot_livetime += br_livetime_s;
-//   }
-
-//   return wtd_sum / tot_livetime;
-// }
-
 // Get the total count of a given type of background event. We pass a *pointer*
 // to the daily rate in case it's a tree branch that updates every time we call
 // GetEntry.
@@ -59,22 +38,16 @@ float total_of(TTree* results, int detector, float* dailyRate_ptr)
     if (br_detector != detector)
       continue;
 
+    // The daily rates are "ideal", i.e., what we would measure if we had
+    // "perfect" cuts (efficiency of 1). To get what we actually measure,
+    // we must scale down the ideal rates according to the efficiencies of the
+    // muon veto and "decoupled multiplicity cut" (DMC).
     float eff = br_vetoEff * br_dmcEff;
     total += *dailyRate_ptr * eff * br_livetime_s / (60*60*24);
   }
 
   return total;
 }
-
-// float mean_veto_eff(TTree* results, int detector)
-// {
-//   return mean_of(results, detector, &br_vetoEff);
-// }
-
-// float mean_dmc_eff(TTree* results, int detector)
-// {
-//   return mean_of(results, detector, &br_dmcEff);
-// }
 
 float total_acc(TTree* results, int detector)
 {
