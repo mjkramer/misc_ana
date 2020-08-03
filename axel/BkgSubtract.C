@@ -60,18 +60,23 @@ float total_li9(TTree* results, int detector)
   return total_of(results, detector, &br_li9Daily);
 }
 
-// Hardcoded values
-float fastn_daily(int site)
+// Hardcoded values for *nominal* IBD selection (i.e. Ep < 12 MeV)
+// (see ~mkramer/mywork/ThesisAnalysis/IbdSel/code/fit_prep/hardcoded.py)
+float fastn_daily_nominal(int site)
 {
   if (site == 1) return 0.843;
   if (site == 2) return 0.638;
   else return 0.053;
 }
 
-float total_fastn(TTree* results, int detector)
+float total_fastn(TTree* results, int detector, TH1F* spectrum)
 {
-  float daily = fastn_daily(br_site);
+#define B(x) spectrum->FindBin(x)
+  float scale_factor =
+    spectrum->Integral(B(0.7), B(17)-1) / spectrum->Integral(B(0.7), B(12)-1);
+  float daily = scale_factor * fastn_daily_nominal(br_site);
   return total_of(results, detector, &daily);
+#undef B
 }
 
 TH1F* norm_acc_spec(TH1F* h_single)
@@ -100,10 +105,6 @@ TH1F* ibd_spec_subtracted(TFile* file, int detector)
   TTree* results = (TTree*) file->Get("results");
   init_tree(results);
 
-  float tot_acc = total_acc(results, detector);
-  float tot_li9 = total_li9(results, detector);
-  float tot_fastn = total_fastn(results, detector);
-
   TH1F* h_single = (TH1F*) file->Get(Form("h_single_AD%d", detector));
   TH1F* h_acc = norm_acc_spec(h_single);
 
@@ -115,6 +116,10 @@ TH1F* ibd_spec_subtracted(TFile* file, int detector)
   TH1F* h_fastn = (TH1F*) f_fastn->Get(hname_fastn);
 
   file->cd();                   // otherwise we'll end up in fastn.root
+
+  float tot_acc = total_acc(results, detector);
+  float tot_li9 = total_li9(results, detector);
+  float tot_fastn = total_fastn(results, detector, h_fastn);
 
   TH1F* h_ibd = (TH1F*) file->Get(Form("h_ibd_AD%d", detector));
   TH1F* h_ibd_sub = (TH1F*) h_ibd->Clone(Form("%s_sub", h_ibd->GetName()));
