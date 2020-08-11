@@ -6,11 +6,9 @@
 
 #include <TError.h>
 
-#include <iostream>
+#include <boost/algorithm/string/predicate.hpp>
 
-// So that code can determine # of ADs, etc.
-Site gSite;
-Phase gPhase;
+#include <iostream>
 
 void flasher_recov(const char* inFile, const char* outFile)
 {
@@ -23,7 +21,10 @@ void flasher_recov(const char* inFile, const char* outFile)
   p.makeAlg<MuonAlg>();
   p.makeAlg<FlasherRecov>();
 
-  p.process({inFile});
+  if (boost::algorithm::ends_with(inFile, ".txt"))
+    p.process(util::readlines(inFile));
+  else
+    p.process({inFile});
 }
 
 int main(int argc, char** argv)

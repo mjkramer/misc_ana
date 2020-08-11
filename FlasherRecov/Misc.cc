@@ -3,7 +3,12 @@
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
+#include <fstream>
+#include <iterator>
 #include <stdexcept>
+
+Site gSite;
+Phase gPhase;
 
 namespace util {
 
@@ -51,6 +56,16 @@ std::tuple<UInt_t, UShort_t> runAndFile(const std::string& path)
   A::split(parts, base, A::is_any_of("."));
 
   return { atoi(parts[2].c_str()), atoi(&parts[6].c_str()[1]) };
+}
+
+std::vector<std::string> readlines(const char* listfile)
+{
+  std::ifstream ifs(listfile);
+  std::vector<std::string> result;
+  std::copy(std::istream_iterator<std::string>(ifs),
+            std::istream_iterator<std::string>(),
+            std::back_inserter(result));
+  return result;
 }
 
 } // namespace util

@@ -19,11 +19,17 @@ inline size_t idx_of(Det d)
   return size_t(d) - 1;
 }
 
+// So that code can determine # of ADs, etc.
+extern Site gSite;
+extern Phase gPhase;
+
 namespace util {
 
 std::vector<Det> ADsFor(Site site, Phase phase);
 std::vector<size_t> iADsFor(Site site, Phase phase);
 
 std::tuple<UInt_t, UShort_t> runAndFile(const std::string& path);
+
+std::vector<std::string> readlines(const char* listfile);
 
 } // namespace util

@@ -2,9 +2,6 @@
 
 #include <TH2F.h>
 
-extern Site gSite;
-extern Phase gPhase;
-
 FlasherRecov::FlasherRecov()
 {
   for (Det det : util::ADsFor(gSite, gPhase)) {
