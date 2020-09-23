@@ -2,3 +2,6 @@
 	path = FlasherRecov/SelectorFramework
 	url = https://github.com/mjkramer/SelectorFramework
 	branch = tmp
+[submodule ".modules/SelectorFramework"]
+	path = .modules/SelectorFramework
+	url = https://github.com/mjkramer/SelectorFramework
