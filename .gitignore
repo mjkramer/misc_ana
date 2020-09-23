@@ -3,3 +3,8 @@
 obipy-resources
 .ccls-cache
 _build
+__pycache__
+*.d
+*.pcm
+bak*
+gfx

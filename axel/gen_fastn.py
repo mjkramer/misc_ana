@@ -38,7 +38,8 @@ def main():
             out_htitle = f"Fast neutron spectrum, EH{hall}-AD{det}"
             out_hist = R.TH1F(out_hname, out_htitle, 400, 0, 20)
 
-            src_hist.Fit(func, "0", "goff")
+            # src_hist.Fit(func, "0", "goff")
+            src_hist.Fit(func)
 
             for ibin in range(1, out_hist.GetNbinsX() + 1):
                 if out_hist.GetBinLowEdge(ibin + 1) <= 0.7:
@@ -48,11 +49,16 @@ def main():
                 x = out_hist.GetBinCenter(ibin)
                 y = func.Eval(x)
                 out_hist.SetBinContent(ibin, y)
+                # 20% as used in the toy MC as the shape uncertainty
+                out_hist.SetBinError(ibin, 0.2 * y)
 
             out_hist.Scale(1/out_hist.Integral(), "nosw2")
 
             out.cd()
             out_hist.Write()
+
+            # XXX
+            src_hist.Write()
 
 
 if __name__ == '__main__':

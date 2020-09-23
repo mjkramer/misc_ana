@@ -1,0 +1,9 @@
+* The plan
+** Generate normalized Li9/fastn spectra out to 20 MeV
+Use same binning as h_ibd_AD1 i.e. 0.05 MeV
+*** Li9
+Just take from fitter, extend, set all bins > 12 MeV to zero?
+*** FastN
+Take fitter spectra, fit with fFastN, sample
+
+Accidentals: normalize? Also rebin? And zero above 17 MeV?
