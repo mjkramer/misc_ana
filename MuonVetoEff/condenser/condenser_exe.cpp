@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "LivetimeWriter.hh"
 #include "MuonReader.hh"
 #include "MuonCondenser.hh"
 
@@ -11,6 +12,7 @@ void condense(const char* inFile, const char* outFile)
 
   p.makeAlg<MuonReader>();
   p.makeAlg<MuonCondenser>();
+  p.makeAlg<LivetimeWriter>();
 
   p.process({inFile});
 }
