@@ -6,14 +6,20 @@ R.gSystem.Load("~/physics/ana4thesis/IbdSel/code/selector/_build/stage2.so")
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
+from functools import lru_cache
+
+@lru_cache()
+def tfile(site):
+    return R.TFile(f"muons.dbd.eh{site}.0001.root")
 
 # Replace me with brute-force result of running stage2
-def vetoEff(tfile, det, showerCut, showerTime):
-    livetime = tfile.livetime.GetVal()
-    h_wp = tfile.Get(f"h_wpMuons_ad{det}")
-    h_ad = tfile.Get(f"h_adMuons_ad{det}")
+def vetoEff(site, det, showerCut, showerTime):
+    f = tfile(site)
+    livetime = f.livetime.GetVal()
+    h_wp = f.Get(f"h_wpMuons_ad{det}")
+    h_ad = f.Get(f"h_adMuons_ad{det}")
 
-    n_wp = h_wp.Integral()
+    n_wp = h_wp.Integral()      # XXX
     cutbin = h_ad.FindBin(showerCut)
     n_ad = h_ad.Integral(h_ad.FindBin(3000), cutbin - 1)
     n_sh = h_ad.Integral(cutbin, h_ad.GetNbinsX())
@@ -30,7 +36,7 @@ def vetoEff(tfile, det, showerCut, showerTime):
 
     return 1 - (t_wpVeto + t_adVeto + t_shVeto) / livetime
 
-def scale_unc(tfile, site, det, showerCut, showerTime):
+def scale_unc(site, det, showerCut, showerTime):
     nomCut = 3e5
     nomTime = 0.4004
 
@@ -40,19 +46,19 @@ def scale_unc(tfile, site, det, showerCut, showerTime):
 
     calc = R.Li9Calc()
 
-    eff = vetoEff(tfile, det, showerCut, showerTime)
-    eff_nom = vetoEff(tfile, det, nomCut, nomTime)
+    eff = vetoEff(site, det, showerCut, showerTime)
+    eff_nom = vetoEff(site, det, nomCut, nomTime)
 
     # rate = calc.li9daily(1, showerCut, 1e3 * showerTime)
     # rate_nom = calc.li9daily(1, nomCut, 1e3 * nomTime)
 
     rate = li9_linreg(site, showerCut, showerTime)
-    rate_nom = li9_linreg(1, nomCut, nomTime)
+    rate_nom = li9_linreg(site, nomCut, nomTime)
 
     new_unc = li9_budget * rate/rate_nom + stat_budget * np.sqrt(eff_nom/eff) + rest_budget
     return new_unc
 
-def plot2d(func, **kwargs):
+def plot2d(func, fname, title, **kwargs):
     cuts = np.arange(2.5e5, 3.501e5, 0.1e5)
     times = np.arange(0.1, 2.01, 0.1)
 
@@ -62,17 +68,21 @@ def plot2d(func, **kwargs):
     plt.figure()
     plt.pcolormesh(cuts, times, vals, shading='nearest', **kwargs)
     plt.colorbar()
+    plt.title(title)
+    plt.xlabel("Shower muon definition [p. e.]")
+    plt.ylabel("Shower veto time [s]")
     plt.tight_layout()
+    plt.savefig(f"gfx/{fname}.png")
 
-def plot_vetoEff(tfile, det):
+def plot_vetoEff(site, det):
     def f(cut, time):
-        return vetoEff(tfile, det, cut, time)
-    return plot2d(f)
+        return vetoEff(site, det, cut, time)
+    return plot2d(f, f"vetoEff_eh{site}_ad{det}", f"Muon veto efficiency, EH{site}-AD{det}")
 
-def plot_unc(tfile, site, det, **kwargs):
+def plot_unc(site, det, **kwargs):
     def f(cut, time):
-        return scale_unc(tfile, site, det, cut, time)
-    return plot2d(f, **kwargs)
+        return scale_unc(site, det, cut, time)
+    return plot2d(f, f"theta13_unc_eh{site}_ad{det}", f"Theta13 uncertainty, EH{site}-AD{det}", **kwargs)
 
 def plot_li9_calc(site, mode=R.Li9Calc.Mode.Nominal):
     calc = R.Li9Calc()
@@ -85,7 +95,7 @@ def plot_li9_calc(site, mode=R.Li9Calc.Mode.Nominal):
 def plot_li9_linreg(site):
     def f(cut, time):
         return li9_linreg(site, cut, time)
-    return plot2d(f)
+    return plot2d(f, f"li9_linreg_eh{site}", f"Li9 daily rate, EH{site}")
 
 # garbage
 def li9_quick(site, cut, time_s):
