@@ -8,6 +8,9 @@ import numpy as np
 from scipy import stats
 from functools import lru_cache
 
+# shower muon PE
+CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
+
 @lru_cache()
 def tfile(site):
     return R.TFile(f"muons.dbd.eh{site}.0001.root")
@@ -59,14 +62,13 @@ def scale_unc(site, det, showerCut, showerTime):
     return new_unc
 
 def plot2d(func, fname, title, **kwargs):
-    cuts = np.arange(2.5e5, 3.501e5, 0.1e5)
     times = np.arange(0.1, 2.01, 0.1)
 
-    vals = [[func(cut, time) for cut in cuts]
+    vals = [[func(cut, time) for cut in CUTS]
             for time in times]
 
     plt.figure()
-    plt.pcolormesh(cuts, times, vals, shading='nearest', **kwargs)
+    plt.pcolormesh(CUTS, times, vals, shading='nearest', **kwargs)
     plt.colorbar()
     plt.title(title)
     plt.xlabel("Shower muon definition [p. e.]")
@@ -111,37 +113,37 @@ def li9_quick(site, cut, time_s):
     return rate_for_400ms * np.exp(-time_s / tau_s) / np.exp(-0.4004 / tau_s)
 
 def li9_linreg(site, cut, time_s):
-    cuts = np.arange(2.5e5, 3.501e5, 0.1e5)
     calc = R.Li9Calc()
     vals = []
-    for mode in range(4):
+    # for mode in range(4):
+    for mode in range(1):
         calc.setMode(mode)
         vals += [calc.li9daily(site, cut, 1e3 * time_s)
-                 for cut in cuts]
-    xs = list(cuts) * 4
+                 for cut in CUTS]
+    # xs = list(CUTS) * 4
+    xs = list(CUTS)
     m, b, *_ = stats.linregress(xs, vals)
     return m * cut + b
 
 # XXX for Kam-Biu
 def plot_li9_1d(site, time=0.4004):
-    cuts = np.arange(2.5e5, 3.501e5, 0.1e5)
-
     calc = R.Li9Calc()
 
     plt.figure()
 
-    mode_names = ['Nominal', 'No B12', '15% He8', 'No He8']
+    # mode_names = ['Nominal', 'No B12', '15% He8', 'No He8']
+    mode_names = ['Nominal']
 
     for mode, name in enumerate(mode_names):
         calc.setMode(mode)
         vals = [calc.li9daily(site, cut, 1e3 * time)
-                for cut in cuts]
-        plt.plot(cuts, vals, 'o', label=name)
+                for cut in CUTS]
+        plt.plot(CUTS, vals, 'o', label=name)
 
-    # quickvals = [li9_quick(site, cut, time) for cut in cuts]
-    # plt.plot(cuts, quickvals)
-    linregvals = [li9_linreg(site, cut, time) for cut in cuts]
-    plt.plot(cuts, linregvals)
+    # quickvals = [li9_quick(site, cut, time) for cut in CUTS]
+    # plt.plot(CUTS, quickvals)
+    linregvals = [li9_linreg(site, cut, time) for cut in CUTS]
+    plt.plot(CUTS, linregvals)
 
     plt.title(f"Daily Li9 rate, {time}s veto, EH{site}")
     plt.xlabel("Shower muon definition [p.e.]")
