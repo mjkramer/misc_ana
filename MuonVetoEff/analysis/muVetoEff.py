@@ -8,6 +8,8 @@ import numpy as np
 from scipy import stats
 from functools import lru_cache
 
+import mplhacks
+
 # shower muon PE
 CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
 
@@ -148,5 +150,6 @@ def plot_li9_1d(site, time=0.4004):
     plt.title(f"Daily Li9 rate, {time}s veto, EH{site}")
     plt.xlabel("Shower muon definition [p.e.]")
 
-    plt.legend()
+    # plt.legend()
+    plt.tight_layout()
     plt.savefig(f"gfx/li9_1d_eh{site}_{int(time*1000)}ms.png")
