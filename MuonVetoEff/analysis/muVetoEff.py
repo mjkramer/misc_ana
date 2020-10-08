@@ -54,11 +54,14 @@ def scale_unc(site, det, showerCut, showerTime):
     eff = vetoEff(site, det, showerCut, showerTime)
     eff_nom = vetoEff(site, det, nomCut, nomTime)
 
-    # rate = calc.li9daily(1, showerCut, 1e3 * showerTime)
-    # rate_nom = calc.li9daily(1, nomCut, 1e3 * nomTime)
+    # rate = calc.li9daily_nearest(1, showerCut, 1e3 * showerTime)
+    # rate_nom = calc.li9daily_nearest(1, nomCut, 1e3 * nomTime)
 
-    rate = li9_linreg(site, showerCut, showerTime)
-    rate_nom = li9_linreg(site, nomCut, nomTime)
+    # rate = li9_linreg(site, showerCut, showerTime)
+    # rate_nom = li9_linreg(site, nomCut, nomTime)
+
+    rate = calc.li9daily_linreg(site, showerCut, 1e3 * showerTime)
+    rate_nom = calc.li9daily_linreg(site, nomCut, 1e3 * nomTime)
 
     new_unc = li9_budget * rate/rate_nom + stat_budget * np.sqrt(eff_nom/eff) + rest_budget
     return new_unc
@@ -93,8 +96,9 @@ def plot_li9_calc(site, mode=R.Li9Calc.Mode.Nominal):
     calc.setMode(mode)
 
     def f(cut, time):
-        return calc.li9daily(site, cut, 1e3 * time)
-    return plot2d(f)
+        # return calc.li9daily_nearest(site, cut, 1e3 * time)
+        return calc.li9daily_linreg(site, cut, 1e3 * time)
+    return plot2d(f, f"li9_calc_eh{site}", f"Li9 daily rate (C++), EH{site}")
 
 def plot_li9_linreg(site):
     def f(cut, time):
@@ -120,7 +124,7 @@ def li9_linreg(site, cut, time_s):
     # for mode in range(4):
     for mode in range(1):
         calc.setMode(mode)
-        vals += [calc.li9daily(site, cut, 1e3 * time_s)
+        vals += [calc.li9daily_nearest(site, cut, 1e3 * time_s)
                  for cut in CUTS]
     # xs = list(CUTS) * 4
     xs = list(CUTS)
@@ -138,7 +142,8 @@ def plot_li9_1d(site, time=0.4004):
 
     for mode, name in enumerate(mode_names):
         calc.setMode(mode)
-        vals = [calc.li9daily(site, cut, 1e3 * time)
+        # vals = [calc.li9daily_nearest(site, cut, 1e3 * time)
+        vals = [calc.li9daily_linreg(site, cut, 1e3 * time)
                 for cut in CUTS]
         plt.plot(CUTS, vals, 'o', label=name)
 
