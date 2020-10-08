@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import matplotlib.pyplot as plt
 
 def read():
@@ -28,8 +30,16 @@ def show():
     for nfiles in sorted(r.keys()):
         data = r[nfiles]
         xs, ys = zip(*data)
-        ys = [5676 * y / 3600 * 80 for y in ys]
+        # ys = [5676 * y / 3600 * 80 for y in ys]
+        ys = [5676 * y / 3600 for y in ys]
         plt.plot(xs, ys, '.', label=f'{nfiles}-day benchmark')
-        plt.xlabel('Processes per KNL node')
-        plt.ylabel('MPP hours for P17B')
+        plt.xlabel('# processes per Xeon Phi "Knight\'s Landing" node')
+        # plt.ylabel('MPP hours for P17B')
+        plt.ylabel('Node-hours to process P17B')
         plt.legend()
+        plt.title('LBNL IBD selection: Performance vs. level of parallelism')
+        plt.tight_layout()
+        plt.savefig("benchmarking.pdf")
+
+if __name__ == '__main__':
+    show()
