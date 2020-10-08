@@ -22,6 +22,7 @@ def plot_scattered(hall, det, *args, **kwargs):
     tbl = get_df().query(f"site == {hall} and detector == {det}")
     sizes = range(1, len(tbl)+1)
     vals = [mean_veto_eff(tbl.sample(N)) for N in sizes]
+
     plt.plot(sizes, vals, *args, **kwargs)
     plt.plot(sizes, len(sizes) * [1.001*vals[-1]], '--k')
     plt.plot(sizes, len(sizes) * [0.999*vals[-1]], '--k')
@@ -31,14 +32,8 @@ def plot_smooth(hall, det, *args, **kwargs):
     "Incrementally build up a single sample"
     tbl = get_df().query(f"site == {hall} and detector == {det}")
     sizes = range(1, len(tbl)+1)
-    vals = []
-    randtbl = pd.DataFrame().reindex(columns=tbl.columns)
-
-    for _ in sizes:
-        row = tbl.sample()
-        tbl = tbl.drop(row.index)
-        randtbl = pd.concat([randtbl, row])
-        vals.append(mean_veto_eff(randtbl))
+    randtbl = tbl.sample(frac=1)
+    vals = [mean_veto_eff(randtbl.iloc[:N]) for N in sizes]
 
     plt.plot(sizes, vals, *args, **kwargs)
     plt.plot(sizes, len(sizes) * [1.001*vals[-1]], '--k')
