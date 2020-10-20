@@ -39,3 +39,7 @@ def plot_smooth(hall, det, *args, **kwargs):
     plt.plot(sizes, vals, *args, **kwargs)
     plt.plot(sizes, len(sizes) * [1.001*vals[-1]], '--k')
     plt.plot(sizes, len(sizes) * [0.999*vals[-1]], '--k')
+
+    plt.title(f"Muon veto efficiency convergence, EH{hall}-AD{det}")
+    plt.xlabel("Days of data used")
+    plt.ylabel("Livetime-weighted mean veto efficiency")
