@@ -5,6 +5,7 @@ from root_pandas import read_root
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import mplhacks
 
 @lru_cache()
 def get_df():

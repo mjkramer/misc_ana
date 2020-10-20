@@ -3,3 +3,5 @@
 - Google: pyroot matplotib event loop
 - [[https://root-forum.cern.ch/t/pyroot-interactivity-and-matplotlib/26968][pyROOT Interactivity and matplotlib - ROOT - ROOT Forum]]
 - [[https://root-forum.cern.ch/t/canvas-freezes-on-matplotlib-import/22044/5][Canvas freezes on matplotlib import - ROOT - ROOT Forum]]
+** PyROOT batch mode
+- https://sft.its.cern.ch/jira/browse/ROOT-11027
