@@ -10,6 +10,7 @@ class MuonCondenser : public SimpleAlg<MuonReader> {
 public:
   MuonCondenser();
   void finalize(Pipeline& _p) override;
+  Status consume_old(const MuonReader::Data& muon);
   Status consume(const MuonReader::Data& muon) override;
 
 private:
