@@ -8,8 +8,8 @@ MuonCondenser::MuonCondenser()
   for (int icut = 0; icut < N_CUTS_AD; ++icut) {
     for (int idet = 0; idet < 4; ++idet) {
       auto name = Form("h_adToAd_%dpe_ad%d", int(CUTS_PE_AD[icut]), idet+1);
-      h_adToAd[icut][idet] = new TH2F(name, name, 1000, 0, 1e6,
-                                      10000, 0, 1000);
+      h_adToAd[icut][idet] = new TH2F(name, name, 25, 0, 25000,
+                                      50, 0, 50);
     }
   }
 
@@ -17,8 +17,8 @@ MuonCondenser::MuonCondenser()
     for (int idet = 0; idet < 4; ++idet) {
       auto poolname = ipool == 0 ? "Iwp" : "Owp";
       auto name = Form("h_%sToAd_ad%d", poolname, idet+1);
-      h_wpToAd[ipool][idet] = new TH2F(name, name, 1000, 0, 1e6,
-                                       10000, 0, 1000);
+      h_wpToAd[ipool][idet] = new TH2F(name, name, 25, 0, 25000,
+                                       50, 0, 50);
     }
   }
 
@@ -26,8 +26,8 @@ MuonCondenser::MuonCondenser()
     for (int ipool = 0; ipool < 2; ++ipool) {
       auto poolname = ipool == 0 ? "Iwp" : "Owp";
       auto name = Form("h_adTo%s_ad%d", poolname, idet+1);
-      h_adToWp[idet][ipool] = new TH2F(name, name, 250, 0, 250,
-                                       10000, 0, 1000);
+      h_adToWp[idet][ipool] = new TH2F(name, name, 50, 0, 50,
+                                       50, 0, 50);
     }
   }
 
@@ -36,8 +36,8 @@ MuonCondenser::MuonCondenser()
       auto poolnameFrom = ipoolFrom == 0 ? "Iwp" : "Owp";
       auto poolnameTo = ipoolTo == 0 ? "Iwp" : "Owp";
       auto name = Form("h_%sTo%s", poolnameFrom, poolnameTo);
-      h_wpToWp[ipoolFrom][ipoolTo] = new TH2F(name, name, 250, 0, 250,
-                                              10000, 0, 1000);
+      h_wpToWp[ipoolFrom][ipoolTo] = new TH2F(name, name, 50, 0, 50,
+                                              50, 0, 50);
     }
   }
 }
