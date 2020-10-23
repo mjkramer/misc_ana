@@ -1,45 +1,51 @@
 import ROOT as R
 R.gROOT.SetBatch(True)
-R.gSystem.Load("~/physics/ana4thesis/IbdSel/code/selector/_build/common.so")
-R.gSystem.Load("~/physics/ana4thesis/IbdSel/code/selector/_build/stage2.so")
+R.gSystem.Load("~/mywork/ThesisAnalysis/IbdSel/code/selector/_build/common.so")
+R.gSystem.Load("~/mywork/ThesisAnalysis/IbdSel/code/selector/_build/stage2.so")
+R.gROOT.ProcessLine(".L ../toymc/muveto_toy.cc+")
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import stats
+# from scipy import stats
 from functools import lru_cache
 
-import mplhacks
+# import mplhacks
 
 # shower muon PE
 CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
+
 
 @lru_cache()
 def tfile(site):
     return R.TFile(f"muons.dbd.eh{site}.0001.root")
 
-# Replace me with brute-force result of running stage2
-def vetoEff(site, det, showerCut, showerTime):
-    f = tfile(site)
-    livetime = f.livetime.GetVal()
+
+def vetoEff(f, det, showerCut, showerTime):
+    livetime = f.h_livetime.GetBinContent(1)
     h_wp = f.Get(f"h_wpMuons_ad{det}")
     h_ad = f.Get(f"h_adMuons_ad{det}")
 
-    n_wp = h_wp.Integral()      # XXX
+    n_wp = h_wp.Integral(h_wp.FindBin(13), h_wp.GetNbinsX())
     cutbin = h_ad.FindBin(showerCut)
     n_ad = h_ad.Integral(h_ad.FindBin(3000), cutbin - 1)
     n_sh = h_ad.Integral(cutbin, h_ad.GetNbinsX())
 
-    t_shVeto = n_sh * showerTime
-    t_adVeto = n_ad * 1_402e-6 * (1 - t_shVeto / livetime)
-    t_wpVeto = n_wp * 602e-6 * (1 - t_shVeto / livetime) * (1 - t_adVeto / livetime)
-    t_adVeto *= (1 - t_wpVeto / livetime)
+    toy = R.MuVetoToy()
+    toy.tVetoSh = showerTime
+    return toy.vetoEff(n_wp/livetime, n_ad/livetime, n_sh/livetime)
+
+    # t_shVeto = n_sh * showerTime
+    # t_adVeto = n_ad * 1_402e-6 * (1 - t_shVeto / livetime)
+    # t_wpVeto = n_wp * 602e-6 * (1 - t_shVeto / livetime) * (1 - t_adVeto / livetime)
+    # t_adVeto *= (1 - t_wpVeto / livetime)
 
     # t_shVeto = n_sh * showerTime
     # t_adVeto = n_ad * 1_402e-6
     # t_wpVeto = n_wp * 602e-6
     # t_adVeto *= (1 - t_wpVeto / livetime)
 
-    return 1 - (t_wpVeto + t_adVeto + t_shVeto) / livetime
+    # return 1 - (t_wpVeto + t_adVeto + t_shVeto) / livetime
+
 
 def scale_unc(site, det, showerCut, showerTime):
     nomCut = 3e5
@@ -51,8 +57,8 @@ def scale_unc(site, det, showerCut, showerTime):
 
     calc = R.Li9Calc()
 
-    eff = vetoEff(site, det, showerCut, showerTime)
-    eff_nom = vetoEff(site, det, nomCut, nomTime)
+    eff = vetoEff(tfile(site), det, showerCut, showerTime)
+    eff_nom = vetoEff(tfile(site), det, nomCut, nomTime)
 
     # rate = calc.li9daily_nearest(1, showerCut, 1e3 * showerTime)
     # rate_nom = calc.li9daily_nearest(1, nomCut, 1e3 * nomTime)
@@ -83,7 +89,7 @@ def plot2d(func, fname, title, **kwargs):
 
 def plot_vetoEff(site, det):
     def f(cut, time):
-        return vetoEff(site, det, cut, time)
+        return vetoEff(tfile(site), det, cut, time)
     return plot2d(f, f"vetoEff_eh{site}_ad{det}", f"Muon veto efficiency, EH{site}-AD{det}")
 
 def plot_unc(site, det, **kwargs):
@@ -91,14 +97,14 @@ def plot_unc(site, det, **kwargs):
         return scale_unc(site, det, cut, time)
     return plot2d(f, f"theta13_unc_eh{site}_ad{det}", f"Theta13 uncertainty, EH{site}-AD{det}", **kwargs)
 
-def plot_li9_calc(site, mode=R.Li9Calc.Mode.Nominal):
-    calc = R.Li9Calc()
-    calc.setMode(mode)
+# def plot_li9_calc(site, mode=R.Li9Calc.Mode.Nominal):
+#     calc = R.Li9Calc()
+#     calc.setMode(mode)
 
-    def f(cut, time):
-        # return calc.li9daily_nearest(site, cut, 1e3 * time)
-        return calc.li9daily_linreg(site, cut, 1e3 * time)
-    return plot2d(f, f"li9_calc_eh{site}", f"Li9 daily rate (C++), EH{site}")
+#     def f(cut, time):
+#         # return calc.li9daily_nearest(site, cut, 1e3 * time)
+#         return calc.li9daily_linreg(site, cut, 1e3 * time)
+#     return plot2d(f, f"li9_calc_eh{site}", f"Li9 daily rate (C++), EH{site}")
 
 def plot_li9_linreg(site):
     def f(cut, time):
