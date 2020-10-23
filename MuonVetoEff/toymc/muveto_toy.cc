@@ -6,7 +6,11 @@
 struct MuVetoToy {
   double vetoEff(double r_wp, double r_ad, double r_sh);
 
-  static constexpr double LIVETIME = 1e6; // seconds
+  double livetime = 1e6; // seconds
+
+  double tVetoWp = 602e-6;
+  double tVetoAd = 1402e-6;
+  double tVetoSh = 0.4004;
 
   enum class MuonType {
     Wp, Ad, Sh
@@ -16,31 +20,33 @@ struct MuVetoToy {
     MuonType type;
     double time;
 
-    float window_size() const
-    {
-      switch (type) {
-      case MuonType::Wp:
-        return 602e-6;
-      case MuonType::Ad:
-        return 1402e-6;
-      case MuonType::Sh:
-        return 0.4004;
-      }
-      throw;
-    }
   };
 
   TRandom3 ran;
 
+  float window_size(const Muon& mu) const;
   void insert_muons(std::vector<Muon>& muons, MuonType type, double rate);
 };
 
+float MuVetoToy::window_size(const Muon& mu) const
+{
+  switch (mu.type) {
+  case MuonType::Wp:
+    return tVetoWp;
+  case MuonType::Ad:
+    return tVetoAd;
+  case MuonType::Sh:
+    return tVetoSh;
+  }
+  throw;
+}
+
 void MuVetoToy::insert_muons(std::vector<Muon>& muons, MuonType type, double rate)
 {
-  const int N = int(LIVETIME * rate);
+  const int N = int(livetime * rate);
 
   for (int i = 0; i < N; ++i) {
-    double time = ran.Uniform(0, LIVETIME);
+    double time = ran.Uniform(0, livetime);
     muons.push_back({type, time});
   }
 }
@@ -60,15 +66,15 @@ double MuVetoToy::vetoEff(double r_wp, double r_ad, double r_sh)
   double totalVetoTime = 0;
 
   for (const auto& muon : muons) {
-    double windowEnd = muon.time + muon.window_size();
+    double windowEnd = muon.time + window_size(muon);
     if (windowEnd < lastWindowEnd)
       continue;
     double overlap = muon.time < lastWindowEnd
       ? lastWindowEnd - muon.time
       : 0;
-    totalVetoTime += muon.window_size() - overlap;
+    totalVetoTime += window_size(muon) - overlap;
     lastWindowEnd = windowEnd;
   }
 
-  return 1 - totalVetoTime / LIVETIME;
+  return 1 - totalVetoTime / livetime;
 }
