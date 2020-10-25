@@ -1,0 +1,6 @@
+analysis/output
+analysis/stage2_pbp
+condenser/merged
+condenser/muons.*.root
+condenser/results
+condenser4retrig/mu4rt.*.root

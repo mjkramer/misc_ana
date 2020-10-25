@@ -4,6 +4,7 @@ obipy-resources
 .ccls-cache
 _build
 __pycache__
+*.so
 *.d
 *.pcm
 bak*
