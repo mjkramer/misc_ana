@@ -2,5 +2,8 @@ analysis/output
 analysis/stage2_pbp
 condenser/merged
 condenser/muons.*.root
+analysis/muons.*.root
+analysis/stage2.*.root
+analysis/2020_01_26@yolo3
 condenser/results
 condenser4retrig/mu4rt.*.root
