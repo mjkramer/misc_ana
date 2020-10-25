@@ -92,6 +92,19 @@ def plot_vetoEff(site, det):
         return vetoEff(tfile(site), det, cut, time)
     return plot2d(f, f"vetoEff_eh{site}_ad{det}", f"Muon veto efficiency, EH{site}-AD{det}")
 
+def plot_vetoEff_pbp_2d(nADs, site, det, **kwargs):
+    df = pd.read_csv(f"output/vetoEff_pbp_eh{site}_{nADs}ad.txt",
+                     sep=r"\s+")
+    def f(cut, time):
+        print(cut, time)
+        # sub_df = df.query(f"cut_pe == {cut} and time_s == {time}")
+        sub_df = df[np.isclose(df.cut_pe, cut)]
+        sub_df = sub_df[np.isclose(sub_df.time_s, time)]
+        return sub_df[f"effAD{det}"].iloc[0]
+    return plot2d(f, f"vetoEff_pbp_2d_{nADs}ad_eh{site}_ad{det}",
+                  f"Muon veto efficiency, EH{site}-AD{det}", **kwargs)
+
+
 def plot_unc(site, det, **kwargs):
     def f(cut, time):
         return scale_unc(site, det, cut, time)
