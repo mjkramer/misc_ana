@@ -1,15 +1,21 @@
+import os
 import ROOT as R
 R.gROOT.SetBatch(True)
-R.gSystem.Load("~/mywork/ThesisAnalysis/IbdSel/code/selector/_build/common.so")
-R.gSystem.Load("~/mywork/ThesisAnalysis/IbdSel/code/selector/_build/stage2.so")
-R.gROOT.ProcessLine(".L ../toymc/muveto_toy.cc+")
+if os.getenv("IBDSEL_HOME"):
+    for lib in ["common.so", "stage2.so"]:
+        R.gSystem.Load(os.path.join(os.getenv("IBDSEL_HOME"), f"selector/_build/{lib}"))
+R.gROOT.ProcessLine(f".L {os.path.dirname(__file__)}/../toymc/muveto_toy.cc+")
 
 import matplotlib.pyplot as plt
 import numpy as np
-# from scipy import stats
+import pandas as pd
+from scipy import stats
 from functools import lru_cache
 
-# import mplhacks
+try:
+    import mplhacks
+except:
+    pass
 
 # shower muon PE
 CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
