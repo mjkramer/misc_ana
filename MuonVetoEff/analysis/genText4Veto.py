@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 import numpy as np
+from scipy.interpolate import interp2d
 
 import ROOT as R
 R.PyConfig.IgnoreCommandLineOptions = True
@@ -21,10 +22,9 @@ class VetoEff:
             self.dfs[site] = pd.read_csv(fname, sep=r"\s+")
 
     def veto_eff(self, cut_pe, time_s, site, det):
-        sub_df = self.dfs[site]
-        sub_df = sub_df[np.isclose(sub_df["cut_pe"], cut_pe)]
-        sub_df = sub_df[np.isclose(sub_df["time_s"], time_s)]
-        return sub_df[f"effAD{det}"].iloc[0]
+        df = self.dfs[site]
+        f = interp2d(df["cut_pe"], df["time_s"], df[f"effAD{det}"])
+        return f(cut_pe, time_s)[0]
 
 
 def det_active(nADs, site, det):
