@@ -36,7 +36,7 @@ def main():
     os.system(f"mkdir -p {outdir}")
 
     for nADs in [6, 8, 7]:
-        theta13file = f"Theta13-inputs_P17B_inclusve_{nADs}ad.txt"
+        theta13file = f"Theta13-inputs_P17B_inclusive_{nADs}ad.txt"
         template = f"{args.template_dir}/{theta13file}"
         outfile = f"{outdir}/{theta13file}"
         os.system(f"./genText4Veto.py {template} {outfile} {nADs} {args.cut_pe} {args.time_s}")
@@ -52,7 +52,7 @@ def main():
     s2t13 = data_file["sinSq2Theta13"]
     dm2ee = data_file["deltaMSqee"]
 
-    os.system(f"mv {outdir}/PredictedIBD.root {fit_home}/PredictedIBD_bak.root")
+    os.system(f"mv {outdir}/PredictedIBD.root {outdir}/PredictedIBD_bak.root")
     cwd = os.getcwd()
     os.chdir(f"{fit_home}/toySpectra")
     os.system(f'root -b -q LoadClasses.C "genPredictedIBD.C+({s2t13}, {dm2ee})"')

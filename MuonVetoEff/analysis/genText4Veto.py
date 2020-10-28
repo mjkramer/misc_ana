@@ -37,7 +37,7 @@ def det_active(nADs, site, det):
                 (site == 2 and det in [1, 2]) or
                 (site == 3 and det in [1, 2, 3, 4]))
     if nADs == 7:
-        return ((site == 1 and det in [1]) or
+        return ((site == 1 and det in [2]) or
                 (site == 2 and det in [1, 2]) or
                 (site == 3 and det in [1, 2, 3, 4]))
     raise
