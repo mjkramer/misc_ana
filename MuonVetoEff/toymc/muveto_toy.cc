@@ -4,6 +4,8 @@
 #include <vector>
 
 struct MuVetoToy {
+  MuVetoToy();
+
   double vetoEff(double r_wp, double r_ad, double r_sh);
 
   double livetime = 1e6; // seconds
@@ -27,6 +29,11 @@ struct MuVetoToy {
   float window_size(const Muon& mu) const;
   void insert_muons(std::vector<Muon>& muons, MuonType type, double rate);
 };
+
+MuVetoToy::MuVetoToy()
+{
+  ran.SetSeed();
+}
 
 float MuVetoToy::window_size(const Muon& mu) const
 {
