@@ -56,7 +56,7 @@ def read_fit_file(fname):
     chi2_s2t = np.zeros([nS2T])
     chi2_dm2 = np.zeros([nDM2])
 
-    chi2_best = 0
+    # chi2_best = 0
 
     projected_chi2 = 1e10
     is2_best = 0
