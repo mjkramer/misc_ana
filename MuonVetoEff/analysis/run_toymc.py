@@ -31,7 +31,7 @@ def main():
         print("You forgot to set LBNL_FIT_HOME")
         sys.exit(1)
 
-    outdir = f"fit_input/shVeto_{args.cut_pe}pe_{args.time_s}s"
+    outdir = f"fit_results/shVeto_{args.cut_pe}pe_{args.time_s}s"
     outdir = os.path.abspath(outdir)
     os.system(f"mkdir -p {outdir}")
 
