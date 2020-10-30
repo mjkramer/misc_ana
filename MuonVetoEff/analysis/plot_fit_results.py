@@ -1,7 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from glob import glob
 
-import ROOT as R
+import matplotlib.pyplot as plt
 import numpy as np
+import ROOT as R
+import pandas as pd
 
 
 @dataclass
@@ -88,3 +91,60 @@ def read_fit_file(fname):
                      dm2_best=dm2_best,
                      dm2_min1sigma=dm2_min1sigma,
                      dm2_max1sigma=dm2_max1sigma)
+
+
+def read_study(study):
+    data = []
+    for direc in sorted(glob(f"fit_results/{study}_*")):
+        parts = direc.split("/")[-1].split("_")
+        if len(parts) != len(study.split("_")) + 2:
+            # skip other studies whose names start with $study_
+            continue
+        cut_pe = float(parts[-2][:-2])
+        time_s = float(parts[-1][:-1])
+        fit_result = read_fit_file(f"{direc}/fit_shape_2d.root")
+        row = {'cut_pe': cut_pe, 'time_s': time_s, **asdict(fit_result)}
+        data.append(row)
+    return pd.DataFrame(data)
+
+
+def read_study_csv(csvfile):
+    "Reads what we get from df.to_csv(csvfile)"
+    return pd.read_csv(csvfile, index_col=0)
+
+
+# https://stackoverflow.com/questions/43525546/plotting-pcolormesh-from-filtered-pandas-dataframe-for-defined-x-y-ranges-even
+def plot2d(df, expr, title):
+    df = df.copy()
+    df["vals"] = df.eval(expr)
+    piv = df.pivot_table(index="time_s", columns="cut_pe", values="vals")
+    print(piv)
+
+    plt.figure()
+    plt.pcolormesh(piv.columns, piv.index, piv.values,
+                   shading="nearest")
+    plt.colorbar()
+    plt.title(title)
+    plt.xlabel("Shower muon definition [pe]")
+    plt.ylabel("Shower veto time [s]")
+    # plt.xticks(piv.columns)
+    # plt.yticks(piv.index)
+    plt.tight_layout()
+
+
+def plot_s2t_best(df):
+    return plot2d(df, "s2t_best", r"Best fit $\sin^2 2\theta_{13}$")
+
+
+def plot_dm2_best(df):
+    return plot2d(df, "dm2_best", r"Best fit $\Delta m^2_{ee}$")
+
+
+def plot_s2t_unc(df):
+    return plot2d(df, "0.5 * (s2t_max1sigma - s2t_min1sigma)",
+                  r"1$\sigma$ uncertainty on $\sin^2 2\theta_{13}$")
+
+
+def plot_dm2_unc(df):
+    return plot2d(df, "0.5 * (dm2_max1sigma - dm2_min1sigma)",
+                  r"1$\sigma$ uncertainty on $\Delta m^2_{ee}$")
