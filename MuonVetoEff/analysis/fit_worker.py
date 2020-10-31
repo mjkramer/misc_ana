@@ -8,13 +8,12 @@ import random
 from prod_util import unbuf_stdout, sysload
 from prod_io import LockfileListReader, LockfileListWriter
 
-from run_toymc import run_toymc
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("listfile")
     ap.add_argument("template_dir")
     ap.add_argument("tag")
+    ap.add_argument("--toy-opts", default="")
     args = ap.parse_args()
 
     reader = LockfileListReader(
@@ -30,13 +29,10 @@ def main():
             if random.random() < 0.1:
                 sysload()
 
-            cut_pe, time_s = map(float, line.split())
-            outdirname = f"{args.tag}_{cut_pe}pe_{time_s}s"
-
-            run_toymc(args.template_dir,
-                      outdirname,
-                      cut_pe=cut_pe,
-                      time_s=time_s)
+            cut_pe, time_s = line.strip().split()
+            outdirname = f"{args.tag}/{cut_pe}pe_{time_s}s"
+            os.system(f"./run_toymc.py {args.template_dir} {outdirname} " +
+                      f"--cut-pe {cut_pe} --time-s {time_s} {args.toy_opts}")
             writer.log(line)
 
 
