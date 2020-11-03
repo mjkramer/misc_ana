@@ -1,2 +1,5 @@
-fit_results/
-tmp/
+fit_results
+job_input
+logs
+summaries
+tmp
