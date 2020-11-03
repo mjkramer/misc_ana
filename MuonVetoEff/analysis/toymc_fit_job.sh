@@ -21,4 +21,4 @@ memwatch &
 # XXX change this to a cmdline option of fit_worker
 export TIMEOUT_MINS=85
 
-srun -n $SLURM_NTASKS ./fit_worker.py $@
+srun -n $SLURM_NTASKS ./fit_worker.py "$@"
