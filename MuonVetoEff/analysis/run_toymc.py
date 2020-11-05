@@ -25,7 +25,7 @@ def dump_data_file(path, data):
 
 
 def run_toymc(template_dir, dirname, no_fit=False, cut_pe=None, time_s=None,
-              s2t13=None, dm2=None, bcw_bins=False):
+              s2t13=None, dm2=None, bcw_bins=False, use_data=False):
     C = os.system
 
     fit_home = os.getenv("LBNL_FIT_HOME")
@@ -42,7 +42,7 @@ def run_toymc(template_dir, dirname, no_fit=False, cut_pe=None, time_s=None,
         theta13file = f"Theta13-inputs_P17B_inclusive_{nADs}ad.txt"
         template = f"{template_dir}/{theta13file}"
         outfile = f"{outdir}/{theta13file}"
-        if cut_pe and time_s:
+        if (not use_data) and cut_pe and time_s:
             C(f"./genText4Veto.py {template} {outfile} {nADs} {cut_pe} {time_s}")
         else:
             C(f"cp {template} {outfile}")
@@ -68,7 +68,11 @@ def run_toymc(template_dir, dirname, no_fit=False, cut_pe=None, time_s=None,
     S = f"{fit_home}/scripts/run_chain.sh"
     C(f"{S} genToys & {S} genEvisEnu & {S} genSuperHists & {S} genPredIBD & wait; {S} genCovMat")
 
-    C(f"./genHists4Veto.py {outdir}")
+    if use_data:
+        for nADs in [6, 8, 7]:
+            C(f"cp {template_dir}/ibd_eprompt_shapes_{nADs}ad.root {outdir}")
+    else:
+        C(f"./genHists4Veto.py {outdir}")
 
     if not no_fit:
         C(f"{S} shapeFit")
@@ -84,6 +88,7 @@ def main():
     ap.add_argument("--s2t13", type=float)
     ap.add_argument("--dm2", type=float)
     ap.add_argument("--bcw-bins", action="store_true")
+    ap.add_argument("--use-data", action="store_true")
     args = ap.parse_args()
 
     run_toymc(args.template_dir,
@@ -93,7 +98,8 @@ def main():
               time_s=args.time_s,
               s2t13=args.s2t13,
               dm2=args.dm2,
-              bcw_bins=args.bcw_bins)
+              bcw_bins=args.bcw_bins,
+              use_data=args.use_data)
 
 
 if __name__ == '__main__':
