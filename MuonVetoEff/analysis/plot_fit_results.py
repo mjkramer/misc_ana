@@ -95,11 +95,9 @@ def read_fit_file(fname):
 
 def read_study(study):
     data = []
-    for direc in sorted(glob(f"fit_results/{study}_*")):
+    for direc in sorted(glob(f"fit_results/{study}/*")):
+        print(direc)
         parts = direc.split("/")[-1].split("_")
-        if len(parts) != len(study.split("_")) + 2:
-            # skip other studies whose names start with $study_
-            continue
         cut_pe = float(parts[-2][:-2])
         time_s = float(parts[-1][:-1])
         fit_result = read_fit_file(f"{direc}/fit_shape_2d.root")
