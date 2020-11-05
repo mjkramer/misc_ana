@@ -9,6 +9,7 @@ R.gROOT.ProcessLine(f".L {os.path.dirname(__file__)}/../toymc/muveto_toy.cc+")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from root_pandas import read_root
 from scipy import stats
 from functools import lru_cache
 
@@ -183,3 +184,20 @@ def plot_li9_1d(site, time=0.4004):
     # plt.legend()
     plt.tight_layout()
     plt.savefig(f"gfx/li9_1d_eh{site}_{int(time*1000)}ms.png")
+
+def plot_vetoEff_dbd_validation(site, det):
+    df_ibdsel = read_root([f"stage2_pbp/stage2.pbp.eh{site}.{N}ad.root"
+                           for N in [6, 8, 7]],
+                          "results")
+    df_ibdsel = df_ibdsel.query(f"detector == {det} and vetoEff != 0")
+
+    df_toy = pd.read_csv(f"output/vetoEff_dbd_eh{site}.txt", sep=r"\s+")
+    df_toy = df_toy.query(f"effAD{det} != 0")
+
+    plt.figure(figsize=[9.6, 7.2])
+    plt.plot(df_ibdsel["seq"], df_ibdsel["vetoEff"], "o", label="From IBD selection")
+    plt.plot(df_toy["day"], df_toy[f"effAD{det}"], "o", label="Independent calc")
+    plt.legend()
+    plt.title(f"Muon veto efficiency, nominal cuts, EH{site}-AD{det}")
+    plt.xlabel("Day")
+    plt.tight_layout()
