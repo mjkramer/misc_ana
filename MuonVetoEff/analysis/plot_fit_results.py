@@ -27,12 +27,19 @@ def find_lims(xs, ys, yval):
         return ((yval - ys[i+1]) * xs[i] + (ys[i] - yval) * xs[i+1]) / \
             (ys[i] - ys[i+1])
 
+    xmin, xmax = xs[0], xs[-1]
+
     for i in range(len(ys) - 1):
         if ys[i] > yval and ys[i+1] <= yval:
             xmin = interp(i)
         elif ys[i] <= yval and ys[i+1] > yval:
             xmax = interp(i)
             break
+
+    if xmin == xs[0]:
+        print("Warning: Default xmin")
+    if xmax == xs[-1]:
+        print("Warning: Default xmax")
 
     return xmin, xmax
 
