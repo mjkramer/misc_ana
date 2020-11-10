@@ -1,10 +1,17 @@
 from dataclasses import dataclass, asdict
 from glob import glob
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import ROOT as R
 import pandas as pd
+
+try:
+    from mplhacks import mplhacks
+    mplhacks()
+except Exception:
+    pass
 
 
 @dataclass
@@ -119,12 +126,13 @@ def read_study_csv(csvfile):
 
 
 # https://stackoverflow.com/questions/43525546/plotting-pcolormesh-from-filtered-pandas-dataframe-for-defined-x-y-ranges-even
-def plot2d(df, expr, title):
+def plot2d(df, expr, title, name, tag):
     df = df.copy()
     df["vals"] = df.eval(expr)
     piv = df.pivot_table(index="time_s", columns="cut_pe", values="vals")
     print(piv)
 
+    # plt.figure(figsize=[9.6, 7.2])
     plt.figure()
     plt.pcolormesh(piv.columns, piv.index, piv.values,
                    shading="nearest")
@@ -132,24 +140,60 @@ def plot2d(df, expr, title):
     plt.title(title)
     plt.xlabel("Shower muon definition [pe]")
     plt.ylabel("Shower veto time [s]")
-    # plt.xticks(piv.columns)
-    # plt.yticks(piv.index)
+    plt.xticks(piv.columns)
+    plt.yticks(piv.index)
     plt.tight_layout()
 
-
-def plot_s2t_best(df):
-    return plot2d(df, "s2t_best", r"Best fit $\sin^2 2\theta_{13}$")
-
-
-def plot_dm2_best(df):
-    return plot2d(df, "dm2_best", r"Best fit $\Delta m^2_{ee}$")
+    fname = f"gfx/{tag}/{name}.pdf"
+    os.system(f"mkdir -p {os.path.dirname(fname)}")
+    plt.savefig(fname)
 
 
-def plot_s2t_unc(df):
+def plot_s2t_best(df, tag):
+    return plot2d(df, "s2t_best", r"Best fit $\sin^2 2\theta_{13}$",
+                  "s2t_best", tag)
+
+
+def plot_dm2_best(df, tag):
+    return plot2d(df, "dm2_best", r"Best fit $\Delta m^2_{ee}$",
+                  "dm2_best", tag)
+
+
+def plot_s2t_mid(df, tag):
+    return plot2d(df, "0.5 * (s2t_max1sigma + s2t_min1sigma)",
+                  r"Middle of 1$\sigma$ range for $\sin^2 2\theta_{13}$",
+                  "s2t_mid", tag)
+
+
+def plot_dm2_mid(df, tag):
+    return plot2d(df, "0.5 * (dm2_max1sigma + dm2_min1sigma)",
+                  r"Middle of 1$\sigma$ range for $\Delta m^2_{ee}$",
+                  "dm2_mid", tag)
+
+
+def plot_s2t_unc(df, tag):
     return plot2d(df, "0.5 * (s2t_max1sigma - s2t_min1sigma)",
-                  r"1$\sigma$ uncertainty on $\sin^2 2\theta_{13}$")
+                  r"1$\sigma$ uncertainty on $\sin^2 2\theta_{13}$",
+                  "s2t_unc", tag)
 
 
-def plot_dm2_unc(df):
+def plot_dm2_unc(df, tag):
     return plot2d(df, "0.5 * (dm2_max1sigma - dm2_min1sigma)",
-                  r"1$\sigma$ uncertainty on $\Delta m^2_{ee}$")
+                  r"1$\sigma$ uncertainty on $\Delta m^2_{ee}$",
+                  "dm2_unc", tag)
+
+
+def plot_all(tag):
+    df = read_study_csv(f"summaries/{tag}.csv")
+    # plot_s2t_best(df, tag)
+    # plot_dm2_best(df, tag)
+    # plot_s2t_unc(df, tag)
+    # plot_dm2_unc(df, tag)
+    plot_s2t_mid(df, tag)
+    plot_dm2_mid(df, tag)
+
+
+def plot_all_all():
+    for tag in ["oct20_data_bcw", "oct20_data", "oct20_yolo3_bcw",
+                "oct20_yolo3_truePars_bcw", "oct20_yolo3_truePars"]:
+        plot_all(tag)

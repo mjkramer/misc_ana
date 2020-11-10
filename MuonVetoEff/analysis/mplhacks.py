@@ -25,4 +25,5 @@ def add_clipboard_to_figures():
     plt.figure = newfig
 
 
-add_clipboard_to_figures()
+def mplhacks():
+    add_clipboard_to_figures()
