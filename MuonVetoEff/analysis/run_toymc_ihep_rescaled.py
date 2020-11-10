@@ -8,31 +8,7 @@ import ROOT as R
 from run_toymc_ihep import run_toymc_ihep, get_outdir, shapefit
 from run_toymc_ihep import check_fit_home
 from genText4Veto import dets_for, idet
-
-
-def read_theta13_file(fname):
-    "Returns {rownum: [valAD1, ..., valAD8]}"
-    result = {}
-    headers_remaining = 3
-
-    for line in open(fname):
-        line = line.strip()
-
-        if line.startswith("#") or not line:
-            continue
-
-        if headers_remaining > 0:
-            headers_remaining -= 1
-            continue
-
-        words = line.split()
-        rownum = int(words[1])
-        if rownum == 0:         # timestamps etc
-            continue
-        vals = map(float, words[2:])
-        result[rownum] = list(vals)
-
-    return result
+from util import read_theta13_file
 
 
 def rescale_hists(dirname):
