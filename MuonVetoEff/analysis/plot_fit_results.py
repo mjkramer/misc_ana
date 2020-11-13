@@ -230,6 +230,11 @@ def plot_obs_evt(tag, hall, det, is_data, nADs=8):
                            hall, det, is_data, nADs)
 
 
+def plot_spec_int(tag, hall, det, is_data, nADs=8):
+    return plot2d_quantity(tag, "spec_int", "IBD spectrum integral",
+                           hall, det, is_data, nADs)
+
+
 def plot_all_quantities():
     for func in [plot_veto_eff, plot_li9_bkg, plot_obs_evt]:
         for hall, det in [(1, 1), (3, 1)]:
