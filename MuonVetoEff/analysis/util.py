@@ -2,6 +2,7 @@ from glob import glob
 import os
 
 import pandas as pd
+import ROOT as R
 
 
 T13_ROWS = {
@@ -56,3 +57,26 @@ def dump_quantity(study, rowname, nADs=8):
 
     df = pd.DataFrame(data)
     df.to_csv(f"summaries/{study}.{rowname}.{nADs}ad.csv")
+
+
+def dump_spectra_integrals(study, nADs=8):
+    data = []
+
+    for direc in glob(f"fit_results/{study}/*"):
+        parts = os.path.basename(direc).split("_")
+        cut_pe = float(parts[-2][:-2])
+        time_s = float(parts[-1][:-1])
+
+        spec_file = R.TFile(f"{direc}/ibd_eprompt_shapes_{nADs}ad.root")
+        halls = [1, 1, 2, 2, 3, 3, 3, 3]
+        dets = [1, 2, 1, 2, 1, 2, 3, 4]
+        vals = {}
+        for idet in range(8):
+            hname = f"h_ibd_eprompt_inclusive_eh{halls[idet]}_ad{dets[idet]}"
+            h = spec_file.Get(hname)
+            vals[f"AD{idet+1}"] = h.Integral()
+        row = {"cut_pe": cut_pe, "time_s": time_s, **vals}
+        data.append(row)
+
+    df = pd.DataFrame(data)
+    df.to_csv(f"summaries/{study}.spec_int.{nADs}ad.csv")
