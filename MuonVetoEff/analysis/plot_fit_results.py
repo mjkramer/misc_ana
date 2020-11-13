@@ -197,3 +197,41 @@ def plot_all_all():
     for tag in ["oct20_data_bcw", "oct20_data", "oct20_yolo3_bcw",
                 "oct20_yolo3_truePars_bcw", "oct20_yolo3_truePars"]:
         plot_all(tag)
+
+
+def detno(hall, det):
+    return 1 + (hall-1)*2 + det-1
+
+
+def read_quantity(tag, qty, nADs=8):
+    return read_study_csv(f"summaries/{tag}.{qty}.{nADs}ad.csv")
+
+
+def plot2d_quantity(tag, quantity, title, hall, det, is_data, nADs=8):
+    df = read_quantity(tag, quantity, nADs)
+    n = detno(hall, det)
+    what = "data" if is_data else "toy"
+    return plot2d(df, f"AD{n}", f"{title}, EH{hall}-AD{det} ({nADs}AD {what})",
+                  f"{quantity}.eh{hall}_ad{det}.{nADs}ad", tag)
+
+
+def plot_veto_eff(tag, hall, det, is_data, nADs=8):
+    return plot2d_quantity(tag, "veto_eff", "Muon veto efficiency",
+                           hall, det, is_data, nADs)
+
+
+def plot_li9_bkg(tag, hall, det, is_data, nADs=8):
+    return plot2d_quantity(tag, "li9_bkg", r"Daily $^9$Li rate",
+                           hall, det, is_data, nADs)
+
+
+def plot_obs_evt(tag, hall, det, is_data, nADs=8):
+    return plot2d_quantity(tag, "obs_evt", "# of IBD candidates",
+                           hall, det, is_data, nADs)
+
+
+def plot_all_quantities():
+    for func in [plot_veto_eff, plot_li9_bkg, plot_obs_evt]:
+        for hall, det in [(1, 1), (3, 1)]:
+            func("oct20_data", hall, det, True)
+            func("oct20_yolo3", hall, det, False)
