@@ -5,3 +5,6 @@
 - [[https://root-forum.cern.ch/t/canvas-freezes-on-matplotlib-import/22044/5][Canvas freezes on matplotlib import - ROOT - ROOT Forum]]
 ** PyROOT batch mode
 - https://sft.its.cern.ch/jira/browse/ROOT-11027
+** rootpy / parso debug log output
+- https://github.com/ipython/ipython/issues/10946
+- tl;dr logging.getLogger('parso.python.diff').disabled = True
