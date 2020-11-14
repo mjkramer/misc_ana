@@ -2,7 +2,7 @@ from glob import glob
 import os
 
 import ROOT as R
-from numpy import format_float_scientific as fmt
+from numpy import format_float_scientific
 
 
 # because automatic memory management is always soooooo helpful
@@ -33,26 +33,28 @@ def overlay_4x4(cutname):
     f_data = R.TFile(f"fit_results/oct20_data/{cutname}/fit_shape_2d.root")
     f_toy = R.TFile(f"fit_results/oct20_yolo3/{cutname}/fit_shape_2d.root")
 
+    cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
+
     c.cd(1)
-    title = f"Data: {cut_pe:.2g} pe, {time_s:.3g} s (EH3/EH1)"
+    title = f"Data: {cut_pe_str} pe, {time_s:.3g} s (EH3/EH1)"
     h_null, *_ = overlay_spectra(f_data, -1, 1, 0, title)
     h_null.GetYaxis().SetRangeUser(0, 22)
     R.gPad.Modified()
 
     c.cd(3)
-    title = f"Data: {cut_pe:.2g} pe, {time_s:.3g} s (EH3/EH2)"
+    title = f"Data: {cut_pe_str} pe, {time_s:.3g} s (EH3/EH2)"
     h_null, *_ = overlay_spectra(f_data, -1, 1, 1, title)
     h_null.GetYaxis().SetRangeUser(0, 22)
     R.gPad.Modified()
 
     c.cd(2)
-    title = f"Toy: {cut_pe:.2g} pe, {time_s:.3g} s (EH3/EH1)"
+    title = f"Toy: {cut_pe_str} pe, {time_s:.3g} s (EH3/EH1)"
     h_null, *_ = overlay_spectra(f_toy, -1, 1, 0, title)
     h_null.GetYaxis().SetRangeUser(0, 22)
     R.gPad.Modified()
 
     c.cd(4)
-    title = f"Toy: {cut_pe:.2g} pe, {time_s:.3g} s (EH3/EH2)"
+    title = f"Toy: {cut_pe_str} pe, {time_s:.3g} s (EH3/EH2)"
     h_null, *_ = overlay_spectra(f_toy, -1, 1, 1, title)
     h_null.GetYaxis().SetRangeUser(0, 22)
     R.gPad.Modified()
@@ -136,3 +138,56 @@ def overlay_spectra(f, istage, imode, ipred, title):
     R.gPad.Update()
     # return h_null, h_nom, h_pred, h_obs
     return h_null, h_pred, h_obs
+
+
+def get_eprompt_shapes(study, cutname):
+    hists = [None, None, None]
+    for nADs in [6, 8, 7]:
+        f = R.TFile(f"fit_results/{study}/{cutname}/ibd_eprompt_shapes_{nADs}ad.root")
+        for hall in [1, 2, 3]:
+            for det in [1, 2, 3, 4] if hall == 3 else [1, 2]:
+                h = f.Get(f"h_ibd_eprompt_inclusive_eh{hall}_ad{det}")
+                if hists[hall-1] is None:
+                    hists[hall-1] = kept(h.Clone(f"h_eh{hall}"))
+                else:
+                    hists[hall-1].Add(h)
+    return hists
+
+
+def compare_obs_3x2(cutname):
+    R.gStyle.SetOptStat(0)
+
+    c = kept(R.TCanvas(f"c_obs_{cutname}", f"c_obs_{cutname}", 1820, 1300))
+    c.Divide(3, 2)
+
+    hs_data = get_eprompt_shapes("oct20_data", cutname)
+    hs_toy = get_eprompt_shapes("oct20_yolo3", cutname)
+
+    for hall in [1, 2, 3]:
+        c.cd(hall)
+        hs_data[hall-1].SetTitle(f"{cutname} EH{hall}")
+        hs_data[hall-1].SetLineColor(R.kRed)
+        hs_toy[hall-1].SetLineColor(R.kBlue)
+        hs_data[hall-1].Draw("hist")
+        hs_toy[hall-1].Draw("hist same")
+        ymax = max(hs_data[hall-1].GetMaximum(),
+                   hs_toy[hall-1].GetMaximum())
+        hs_data[hall-1].GetYaxis().SetRangeUser(0, 1.1 * ymax)
+        R.gPad.Modified()
+        R.gPad.Update()
+
+        c.cd(hall + 3)
+        hdatnorm = kept(hs_data[hall-1].Clone())
+        htoynorm = kept(hs_toy[hall-1].Clone())
+        hdatnorm.Scale(hdatnorm.Integral())
+        htoynorm.Scale(htoynorm.Integral())
+        hdatnorm.SetTitle(f"{cutname} EH{hall} (normalized)")
+        hdatnorm.Draw("hist")
+        htoynorm.Draw("hist same")
+        ymax = max(hdatnorm.GetMaximum(),
+                   htoynorm.GetMaximum())
+        hdatnorm.GetYaxis().SetRangeUser(0, 1.1 * ymax)
+        R.gPad.Modified()
+        R.gPad.Update()
+
+    return c
