@@ -153,7 +153,7 @@ def get_eprompt_shapes(study, cutname):
     return hists
 
 
-def compare_obs_3x2(cutname, fudge=False):
+def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
     R.gStyle.SetOptStat(0)
 
     # reactor anti-nu anomaly
@@ -168,12 +168,12 @@ def compare_obs_3x2(cutname, fudge=False):
     time_s = float(parts[1][:-1])
     cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
 
-    c = kept(R.TCanvas(f"c_obs_{cutname}{fudgeness}", f"c_obs_{cutname}{fudgeness}",
+    c = kept(R.TCanvas(f"c_{desc}_{cutname}{fudgeness}", f"c_{desc}_{cutname}{fudgeness}",
                        1820, 1300))
     c.Divide(3, 2)
 
-    hs_data = get_eprompt_shapes("oct20_data", cutname)
-    hs_toy = get_eprompt_shapes("oct20_yolo3", cutname)
+    hs_data = func("oct20_data", cutname)
+    hs_toy = func("oct20_yolo3", cutname)
 
     for hall in [1, 2, 3]:
         if fudge:
@@ -219,6 +219,11 @@ def compare_obs_3x2(cutname, fudge=False):
     return c
 
 
+def compare_obs_3x2(cutname, **kwargs):
+    return compare_func_3x2(cutname, func=get_eprompt_shapes, desc="obs",
+                            **kwargs)
+
+
 def compare_obs_3x2_all(fudge=False):
     fudgeness = "_fudge" if fudge else ""
     os.system(f"mkdir -p gfx/compare_obs_3x2{fudgeness}")
@@ -256,3 +261,32 @@ def plot_the_bump(cutname):
         hs_data[hall-1].Draw("hist")
 
     return c
+
+
+def get_corrspecs(study, cutname):
+    hists = [None, None, None]
+    f = R.TFile(f"fit_results/{study}/{cutname}/fit_shape_2d.root")
+    for istage in range(3):
+        for hall in [1, 2, 3]:
+            for det in [1, 2, 3, 4] if hall == 3 else [1, 2]:
+                detno = 2*(hall-1) + det
+                h = f.Get(f"CorrIBDEvts_stage{istage}_AD{detno}")
+                if hists[hall-1] is None:
+                    hists[hall-1] = kept(h.Clone(f"h_{study}_{cutname}_eh{hall}"))
+                else:
+                    hists[hall-1].Add(h)
+    return hists
+
+
+def compare_corrspec_3x2(cutname, **kwargs):
+    return compare_func_3x2(cutname, func=get_corrspecs, desc="corrspec",
+                            **kwargs)
+
+
+def compare_corrspec_3x2_all(fudge=False):
+    fudgeness = "_fudge" if fudge else ""
+    os.system(f"mkdir -p gfx/compare_corrspec_3x2{fudgeness}")
+    for path in glob("fit_results/oct20_data/*"):
+        cutname = os.path.basename(path)
+        c = compare_corrspec_3x2(cutname, fudge=fudge)
+        c.SaveAs(f"gfx/compare_corrspec_3x2{fudgeness}/compare_corrspec_3x2{fudgeness}_{fix_cutname(cutname)}.png")
