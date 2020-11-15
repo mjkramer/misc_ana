@@ -157,6 +157,11 @@ def get_eprompt_shapes(study, cutname):
 def compare_obs_3x2(cutname):
     R.gStyle.SetOptStat(0)
 
+    parts = cutname.split("_")
+    cut_pe = float(parts[0][:-2])
+    time_s = float(parts[1][:-1])
+    cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
+
     c = kept(R.TCanvas(f"c_obs_{cutname}", f"c_obs_{cutname}", 1820, 1300))
     c.Divide(3, 2)
 
@@ -165,7 +170,7 @@ def compare_obs_3x2(cutname):
 
     for hall in [1, 2, 3]:
         c.cd(hall)
-        hs_data[hall-1].SetTitle(f"{cutname} EH{hall}")
+        hs_data[hall-1].SetTitle(f"{cut_pe_str} pe, {time_s:.3g} s: EH{hall}")
         hs_data[hall-1].SetLineColor(R.kRed)
         hs_toy[hall-1].SetLineColor(R.kBlue)
         hs_data[hall-1].Draw("hist")
@@ -173,21 +178,39 @@ def compare_obs_3x2(cutname):
         ymax = max(hs_data[hall-1].GetMaximum(),
                    hs_toy[hall-1].GetMaximum())
         hs_data[hall-1].GetYaxis().SetRangeUser(0, 1.1 * ymax)
+        leg = kept(R.TLegend(0.77, 0.80, 0.88, 0.88))
+        leg.AddEntry(hs_data[hall-1], "Data", "L")
+        leg.AddEntry(hs_toy[hall-1], "Toy", "L")
+        leg.SetBorderSize(0)
+        leg.Draw()
         R.gPad.Modified()
         R.gPad.Update()
 
         c.cd(hall + 3)
         hdatnorm = kept(hs_data[hall-1].Clone())
         htoynorm = kept(hs_toy[hall-1].Clone())
-        hdatnorm.Scale(hdatnorm.Integral())
-        htoynorm.Scale(htoynorm.Integral())
-        hdatnorm.SetTitle(f"{cutname} EH{hall} (normalized)")
+        hdatnorm.Scale(1./hdatnorm.Integral())
+        htoynorm.Scale(1./htoynorm.Integral())
+        hdatnorm.SetTitle(hs_data[hall-1].GetTitle() + " (normalized)")
         hdatnorm.Draw("hist")
         htoynorm.Draw("hist same")
         ymax = max(hdatnorm.GetMaximum(),
                    htoynorm.GetMaximum())
         hdatnorm.GetYaxis().SetRangeUser(0, 1.1 * ymax)
+        leg = kept(R.TLegend(0.77, 0.80, 0.88, 0.88))
+        leg.AddEntry(hdatnorm, "Data", "L")
+        leg.AddEntry(htoynorm, "Toy", "L")
+        leg.SetBorderSize(0)
+        leg.Draw()
         R.gPad.Modified()
         R.gPad.Update()
 
     return c
+
+
+def compare_obs_3x2_all():
+    os.system("mkdir -p gfx/compare_obs_3x2")
+    for path in glob("fit_results/oct20_data/*"):
+        cutname = os.path.basename(path)
+        c = compare_obs_3x2(cutname)
+        c.SaveAs(f"gfx/compare_obs_3x2/compare_obs_3x2_{cutname}.png")
