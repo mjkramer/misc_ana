@@ -30,8 +30,8 @@ def overlay_4x4(cutname):
     c.Divide(2, 2)
 
     # keep?
-    f_data = R.TFile(f"fit_results/oct20_data/{cutname}/fit_shape_2d.root")
-    f_toy = R.TFile(f"fit_results/oct20_yolo3/{cutname}/fit_shape_2d.root")
+    f_data = R.TFile(f"fit_results/oct20_data_withNom/{cutname}/fit_shape_2d.root")
+    f_toy = R.TFile(f"fit_results/oct20_yolo3_withNom/{cutname}/fit_shape_2d.root")
 
     cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
 
@@ -75,7 +75,7 @@ def overlay_spectra(f, istage, imode, ipred, title):
     h_obs = kept(f.Get(f"h_final_obs_{stagename}_mode{imode}_{ipred}"))
     h_pred = kept(f.Get(f"h_final_pred_{stagename}_mode{imode}_{ipred}"))
     h_null = kept(f.Get(f"h_final_pred_null_{stagename}_mode{imode}_{ipred}"))
-    # h_nom = kept(f.Get(f"h_final_pred_nom_{stagename}_mode{imode}_{ipred}"))
+    h_nom = kept(f.Get(f"h_final_pred_nom_{stagename}_mode{imode}_{ipred}"))
 
     # print(h_obs.GetFillStyle(), h_pred.GetFillStyle(), h_null.GetFillStyle(), h_nom.GetFillStyle())
 
@@ -83,9 +83,9 @@ def overlay_spectra(f, istage, imode, ipred, title):
     R.gStyle.SetTitleY(0.98)
     R.gStyle.SetTitleAlign(23)
 
-    # h_nom.SetLineColor(R.kGreen)
-    # h_nom.SetLineWidth(2)
-    # h_nom.SetLineStyle(2)
+    h_nom.SetLineColor(R.kGreen)
+    h_nom.SetLineWidth(2)
+    h_nom.SetLineStyle(2)
 
     h_pred.SetFillStyle(0)
     h_pred.SetLineStyle(1)
@@ -98,17 +98,17 @@ def overlay_spectra(f, istage, imode, ipred, title):
     h_obs.SetMarkerStyle(20)
     h_obs.SetMarkerSize(0.7)
 
-    ratio = h_obs.GetTitle()
+    # ratio = h_obs.GetTitle()
 
     # h_null.SetTitle(f"{title} ({ratio})")
     # can = kept(R.TCanvas())
     h_null.Draw("hist")
-    # h_nom.Draw("hist same")
+    h_nom.Draw("hist same")
     h_pred.Draw("hist same")
     h_obs.Draw("same")
 
     h_null.SetTitle("Null pars")
-    # h_nom.SetTitle("Nominal pars")
+    h_nom.SetTitle("Nominal pars")
     h_pred.SetTitle("Best pars")
     h_obs.SetTitle("Observed")
 
@@ -116,7 +116,7 @@ def overlay_spectra(f, istage, imode, ipred, title):
     leg = kept(R.TLegend(0.65, 0.65, 0.88, 0.88))
     leg.AddEntry(h_obs, "", "P")
     leg.AddEntry(h_pred, "", "L")
-    # leg.AddEntry(h_nom, "", "L")
+    leg.AddEntry(h_nom, "", "L")
     leg.AddEntry(h_null, "", "L")
     leg.SetBorderSize(0)
     leg.Draw()
@@ -136,8 +136,7 @@ def overlay_spectra(f, istage, imode, ipred, title):
 
     R.gPad.Modified()
     R.gPad.Update()
-    # return h_null, h_nom, h_pred, h_obs
-    return h_null, h_pred, h_obs
+    return h_null, h_nom, h_pred, h_obs
 
 
 def get_eprompt_shapes(study, cutname):
