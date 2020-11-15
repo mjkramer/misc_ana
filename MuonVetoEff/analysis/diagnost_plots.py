@@ -67,7 +67,7 @@ def overlay_4x4_all():
     for path in glob("fit_results/oct20_data/*"):
         cutname = os.path.basename(path)
         c = overlay_4x4(cutname)
-        c.SaveAs(f"gfx/overlay_4x4/overlay_4x4_{cutname}.png")
+        c.SaveAs(f"gfx/overlay_4x4/overlay_4x4_{fix_cutname(cutname)}.png")
 
 
 def overlay_spectra(f, istage, imode, ipred, title):
@@ -154,23 +154,35 @@ def get_eprompt_shapes(study, cutname):
     return hists
 
 
-def compare_obs_3x2(cutname):
+def compare_obs_3x2(cutname, fudge=False):
     R.gStyle.SetOptStat(0)
+
+    # reactor anti-nu anomaly
+    # we got this from toy/data spectra integral ratios between data and toy
+    # for 3e5 pe, 0.5 s (close to the nominal 3e5 / 0.4004)
+    # [eh1, eh2, eh3] = [1.057797, 1.057343, 1.057637]
+    magicFudge = 1.0576
+    fudgeness = " (fudged)" if fudge else ""
 
     parts = cutname.split("_")
     cut_pe = float(parts[0][:-2])
     time_s = float(parts[1][:-1])
     cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
 
-    c = kept(R.TCanvas(f"c_obs_{cutname}", f"c_obs_{cutname}", 1820, 1300))
+    c = kept(R.TCanvas(f"c_obs_{cutname}{fudgeness}", f"c_obs_{cutname}{fudgeness}",
+                       1820, 1300))
     c.Divide(3, 2)
 
     hs_data = get_eprompt_shapes("oct20_data", cutname)
     hs_toy = get_eprompt_shapes("oct20_yolo3", cutname)
 
     for hall in [1, 2, 3]:
+        if fudge:
+            hs_data[hall-1].Scale(magicFudge)
+
         c.cd(hall)
-        hs_data[hall-1].SetTitle(f"{cut_pe_str} pe, {time_s:.3g} s: EH{hall}")
+        basetitle = f"{cut_pe_str} pe, {time_s:.3g} s: EH{hall}"
+        hs_data[hall-1].SetTitle(f"{basetitle}{fudgeness}")
         hs_data[hall-1].SetLineColor(R.kRed)
         hs_toy[hall-1].SetLineColor(R.kBlue)
         hs_data[hall-1].Draw("hist")
@@ -191,7 +203,7 @@ def compare_obs_3x2(cutname):
         htoynorm = kept(hs_toy[hall-1].Clone())
         hdatnorm.Scale(1./hdatnorm.Integral())
         htoynorm.Scale(1./htoynorm.Integral())
-        hdatnorm.SetTitle(hs_data[hall-1].GetTitle() + " (normalized)")
+        hdatnorm.SetTitle(basetitle + " (normalized)")
         hdatnorm.Draw("hist")
         htoynorm.Draw("hist same")
         ymax = max(hdatnorm.GetMaximum(),
@@ -208,9 +220,40 @@ def compare_obs_3x2(cutname):
     return c
 
 
-def compare_obs_3x2_all():
-    os.system("mkdir -p gfx/compare_obs_3x2")
+def compare_obs_3x2_all(fudge=False):
+    fudgeness = "_fudge" if fudge else ""
+    os.system(f"mkdir -p gfx/compare_obs_3x2{fudgeness}")
     for path in glob("fit_results/oct20_data/*"):
         cutname = os.path.basename(path)
-        c = compare_obs_3x2(cutname)
-        c.SaveAs(f"gfx/compare_obs_3x2/compare_obs_3x2_{cutname}.png")
+        c = compare_obs_3x2(cutname, fudge=fudge)
+        c.SaveAs(f"gfx/compare_obs_3x2{fudgeness}/compare_obs_3x2{fudgeness}_{fix_cutname(cutname)}.png")
+
+
+def fix_cutname(cutname):
+    "Ensure all time_s have 3 sig figs so that the names sort properly"
+    parts = cutname.split("_")
+    cut_pe = float(parts[0][:-2])
+    time_s = float(parts[1][:-1])
+    return f"{cut_pe:6.1f}pe_{time_s:1.2f}s"
+
+
+def plot_the_bump(cutname):
+    R.gStyle.SetOptStat(0)
+    R.TH1.SetDefaultSumw2(True)
+
+    hs_data = get_eprompt_shapes("oct20_data", cutname)
+    hs_toy = get_eprompt_shapes("oct20_yolo3", cutname)
+
+    c = kept(R.TCanvas(f"c_bump_{cutname}", f"c_bump_{cutname}",
+                       1820, 650))
+    c.Divide(3, 1)
+
+    for hall in [1, 2, 3]:
+        c.cd(hall)
+        hs_data[hall-1].Scale(1./hs_data[hall-1].Integral())
+        hs_toy[hall-1].Scale(1./hs_toy[hall-1].Integral())
+        hs_data[hall-1].Divide(hs_toy[hall-1])
+        hs_data[hall-1].SetTitle(f"Data / toy (EH{hall})")
+        hs_data[hall-1].Draw("hist")
+
+    return c
