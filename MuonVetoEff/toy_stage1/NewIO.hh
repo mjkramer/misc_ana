@@ -4,17 +4,18 @@
 
 enum class IOMode { IN, OUT };
 
-template <class TreeData>
+template <class EventT>
 class TreeWrapper {
 public:
+  using EventType = EventT;
   TreeWrapper(TTree* tree, IOMode mode);
   virtual void init() = 0;
-  TreeData* operator->() const;
-  TreeWrapper<TreeData>& operator=(const TreeData& rhs);
+  EventT* operator->() const;
+  TreeWrapper<EventT>& operator=(const EventT& rhs);
   TTree* tree();
 
 private:
-  TreeData data_;
+  EventT data_;
   TTree* tree_;
   IOMode mode_;
 };
@@ -33,8 +34,8 @@ void make_branch(TTree* tree, IOMode mode, const char* name,
 
 #define NEW_BR(name) make_branch(tree_, mode_, #name, &data_.name)
 
-template <typename TreeData>
-TreeWrapper<TreeData>::TreeWrapper(TTree* tree, IOMode mode) :
+template <typename EventT>
+TreeWrapper<EventT>::TreeWrapper(TTree* tree, IOMode mode) :
   tree_(tree), mode_(mode)
 {
   if (mode == IOMode::IN) {
@@ -44,20 +45,20 @@ TreeWrapper<TreeData>::TreeWrapper(TTree* tree, IOMode mode) :
   init();
 }
 
-template <typename TreeData>
-TTree* TreeWrapper<TreeData>::tree()
+template <typename EventT>
+TTree* TreeWrapper<EventT>::tree()
 {
   return tree_;
 }
 
-template <typename TreeData>
-TreeData* TreeWrapper<TreeData>::operator->() const
+template <typename EventT>
+EventT* TreeWrapper<EventT>::operator->() const
 {
   return &data_;
 }
 
-template <typename TreeData>
-TreeWrapper<TreeData>& TreeWrapper<TreeData>::operator=(const TreeData& rhs)
+template <typename EventT>
+TreeWrapper<EventT>& TreeWrapper<EventT>::operator=(const EventT& rhs)
 {
   data_ = rhs;
 }
