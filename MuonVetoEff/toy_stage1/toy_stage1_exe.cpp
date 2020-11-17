@@ -2,6 +2,7 @@
 #include "MuonGen.hh"
 
 #include <TFile.h>
+#include <TH1F.h>
 #include <TTree.h>
 
 const float RUNTIME_SEC = 1e5;
@@ -50,6 +51,10 @@ int main()
 
   muonTree.Write();
   adTree.Write();
+
+  TH1F h_livetime("h_livetime", "Livetime (s)", 1, 0, 1);
+  h_livetime.SetBinContent(1, RUNTIME_SEC);
+  h_livetime.Write();
 
   return 0;
 }
