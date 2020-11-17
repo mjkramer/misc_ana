@@ -59,7 +59,7 @@ private:
 
 template <class TreeWrapperT>
 TreeSink<TreeWrapperT>::TreeSink(TTree* tree) :
-  wrapper_(tree, IOMode::IN) {}
+  wrapper_(tree, IOMode::OUT) {}
 
 template <class TreeWrapperT>
 TreeSink<TreeWrapperT>::~TreeSink()
