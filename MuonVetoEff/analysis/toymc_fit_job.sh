@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 1 -A dune -C knl -L project,projecta,SCRATCH -q regular -t 01:00:00
+#SBATCH -A dune -C haswell -N 1 -n 2 -t 02:00:00 -q regular -L project,projecta,SCRATCH
 
 source ~/mywork/ThesisAnalysis/IbdSel/code/ibd_prod/bash/job_env.inc.sh
 
