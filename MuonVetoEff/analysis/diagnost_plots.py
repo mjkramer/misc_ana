@@ -263,30 +263,38 @@ def plot_the_bump(cutname):
     return c
 
 
-def get_corrspecs(study, cutname):
+def get_corrspecs(study, cutname, specname="IBD"):
+    suffix = "" if specname == "IBD" else "Spec"
     hists = [None, None, None]
     f = R.TFile(f"fit_results/{study}/{cutname}/fit_shape_2d.root")
     for istage in range(3):
         for hall in [1, 2, 3]:
             for det in [1, 2, 3, 4] if hall == 3 else [1, 2]:
                 detno = 2*(hall-1) + det
-                h = f.Get(f"CorrIBDEvts_stage{istage}_AD{detno}")
+                h = f.Get(f"Corr{specname}Evts{suffix}_stage{istage}_AD{detno}")
                 if hists[hall-1] is None:
-                    hists[hall-1] = kept(h.Clone(f"h_{study}_{cutname}_eh{hall}"))
+                    hists[hall-1] = kept(h.Clone(f"h_{specname}_{study}_{cutname}_eh{hall}"))
                 else:
                     hists[hall-1].Add(h)
     return hists
 
 
-def compare_corrspec_3x2(cutname, **kwargs):
-    return compare_func_3x2(cutname, func=get_corrspecs, desc="corrspec",
+def compare_corrspec_3x2(cutname, specname="IBD", **kwargs):
+    def func(study, cutname):
+        return get_corrspecs(study, cutname, specname)
+    return compare_func_3x2(cutname, func=func, desc=f"corrspec_{specname}",
                             **kwargs)
 
 
-def compare_corrspec_3x2_all(fudge=False):
+def compare_corrspec_3x2_all(specname="IBD", fudge=False):
     fudgeness = "_fudge" if fudge else ""
-    os.system(f"mkdir -p gfx/compare_corrspec_3x2{fudgeness}")
+    os.system(f"mkdir -p gfx/compare_corrspec_{specname}_3x2{fudgeness}")
     for path in glob("fit_results/oct20_data/*"):
         cutname = os.path.basename(path)
-        c = compare_corrspec_3x2(cutname, fudge=fudge)
-        c.SaveAs(f"gfx/compare_corrspec_3x2{fudgeness}/compare_corrspec_3x2{fudgeness}_{fix_cutname(cutname)}.png")
+        c = compare_corrspec_3x2(cutname, specname=specname, fudge=fudge)
+        c.SaveAs(f"gfx/compare_corrspec_{specname}_3x2{fudgeness}/compare_corrspec_{specname}_3x2{fudgeness}_{fix_cutname(cutname)}.png")
+
+
+def compare_corrspec_3x2_all_all(fudge=False):
+    for specname in ["IBD", "Acc", "Li9", "Amc", "Fn", "Aln"]:
+        compare_corrspec_3x2_all(specname=specname, fudge=fudge)
