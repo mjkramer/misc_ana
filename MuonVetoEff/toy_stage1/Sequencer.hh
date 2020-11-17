@@ -7,7 +7,6 @@
 #include <TRandom3.h>
 
 #include <cstdint>
-#include <map>
 #include <tuple>
 #include <vector>
 
@@ -89,8 +88,7 @@ public:
 private:
   IEventSink<EventT>& sink_;
   std::vector<IEventSource<EventT>*> sources_;
-  std::map<IEventSource<EventT>*,
-           std::tuple<Time, EventT>> lastEvents_;
+  std::vector<std::tuple<Time, EventT>> lastEvents_;
 
   void prime();
 };
@@ -108,24 +106,25 @@ void Sequencer<EventT>::addSource(IEventSource<EventT>& source)
 template <class EventT>
 Time Sequencer<EventT>::next()
 {
-  if (lastEvents_.count(sources_[0]) == 0)
+  if (lastEvents_.size() == 0)
     prime();
 
   Time earliestTime {UINT32_MAX, UINT32_MAX};
-  IEventSource<EventT>* earliestSource = nullptr;
+  int iEarliest;
 
-  for (auto source : sources_) {
-    auto [time, _event] = lastEvents_[source];
+  for (int i = 0; i < sources_.size(); ++i) {
+    auto [time, _event] = lastEvents_[i];
 
     if (time < earliestTime) {
-      earliestSource = source;
+      earliestTime = time;
+      iEarliest = i;
     }
   }
 
-  auto [time, event] = lastEvents_[earliestSource];
+  auto [time, event] = lastEvents_[iEarliest];
   sink_.sink(event);
 
-  lastEvents_[earliestSource] = earliestSource->next();
+  lastEvents_[iEarliest] = sources_[iEarliest]->next();
 
   return time;
 }
@@ -133,7 +132,6 @@ Time Sequencer<EventT>::next()
 template <class EventT>
 void Sequencer<EventT>::prime()
 {
-  for (auto source : sources_) {
-    lastEvents_[source] = source->next();
-  }
+  for (auto source : sources_)
+    lastEvents_.push_back(source->next());
 }
