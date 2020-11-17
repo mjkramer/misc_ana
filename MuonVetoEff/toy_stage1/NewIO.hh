@@ -9,12 +9,11 @@ class TreeWrapper {
 public:
   using EventType = EventT;
   TreeWrapper(TTree* tree, IOMode mode);
-  virtual void init() = 0;
   EventT* operator->() const;
-  TreeWrapper<EventT>& operator=(const EventT& rhs);
+  void set(const EventT& rhs);
   TTree* tree();
 
-private:
+protected:
   EventT data_;
   TTree* tree_;
   IOMode mode_;
@@ -41,8 +40,6 @@ TreeWrapper<EventT>::TreeWrapper(TTree* tree, IOMode mode) :
   if (mode == IOMode::IN) {
     tree_->SetBranchStatus("*", false);
   }
-
-  init();
 }
 
 template <typename EventT>
@@ -58,7 +55,7 @@ EventT* TreeWrapper<EventT>::operator->() const
 }
 
 template <typename EventT>
-TreeWrapper<EventT>& TreeWrapper<EventT>::operator=(const EventT& rhs)
+void TreeWrapper<EventT>::set(const EventT& rhs)
 {
   data_ = rhs;
 }

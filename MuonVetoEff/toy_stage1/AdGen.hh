@@ -16,7 +16,8 @@ struct AdEvent {
 };
 
 struct AdTree : virtual TreeWrapper<AdEvent> {
-  void init() override
+  AdTree(TTree* tree, IOMode mode) :
+    TreeWrapper(tree, mode)
   {
     NEW_BR(trigSec);
     NEW_BR(trigNanoSec);
@@ -73,16 +74,16 @@ std::tuple<Time, AdEvent> IbdSource::next()
 {
   AdEvent e;
 
-  if (nextIsDelayed) {
+  if (nextIsDelayed_) {
     last_ = last_.shifted_us(100);
     e.energy = 8;
-    nextIsDelayed = false;
+    nextIsDelayed_ = false;
   }
   else {
     double tToNext_s = ran().Exp(1/rate_hz_);
     last_ = last_.shifted_us(1e6 * tToNext_s);
     e.energy = 3;
-    nextIsDelayed = true;
+    nextIsDelayed_ = true;
   }
 
   e.trigSec = last_.s;

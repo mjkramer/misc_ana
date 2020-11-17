@@ -71,7 +71,7 @@ template <class TreeWrapperT>
 void TreeSink<TreeWrapperT>::sink(typename TreeWrapperT::EventType event)
 {
   prep(event);
-  wrapper_ = event;
+  wrapper_.set(event);
   wrapper_.tree()->Fill();
 }
 
@@ -123,7 +123,7 @@ Time Sequencer<EventT>::next()
   }
 
   auto [time, event] = lastEvents_[earliestSource];
-  sink_->sink(event);
+  sink_.sink(event);
 
   lastEvents_[earliestSource] = earliestSource->next();
 

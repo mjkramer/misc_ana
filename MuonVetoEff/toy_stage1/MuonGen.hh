@@ -17,7 +17,8 @@ struct MuonEvent {
 };
 
 struct MuonTree : virtual TreeWrapper<MuonEvent> {
-  void init() override
+  MuonTree(TTree* tree, IOMode mode) :
+    TreeWrapper(tree, mode)
   {
     NEW_BR(detector);
     NEW_BR(trigSec);
