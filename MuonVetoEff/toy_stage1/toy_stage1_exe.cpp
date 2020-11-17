@@ -1,23 +1,38 @@
+// XXX would be more realistic to include AD+WP muons
+
 #include "AdGen.hh"
 #include "MuonGen.hh"
+
+#include "Framework/ConfigTool.hh"
 
 #include <TFile.h>
 #include <TH1F.h>
 #include <TTree.h>
 
+#include <iostream>
+
 const float RUNTIME_S = 1e5;
 
-int main()
+int main(int argc, const char** argv)
 {
-  TFile outFile("toy_stage1.root", "RECREATE");
+  if (argc != 3) {
+    std::cerr << "Usage: " << argv[0] << " [conffile] [outfile]"
+              << std::endl;
+    return 1;
+  }
+
+  Config config(argv[1]);
+#define C(key) config.get<float>(key)
+
+  TFile outFile(argv[2], "RECREATE");
 
   TTree muonTree("muons", "muons");
   MuonSink muonSink(&muonTree);
   Sequencer muonSeq(&muonSink);
 
-  MuonSource wpSource(5, 180, 15);
-  MuonSource adSource(1, 20, 5e3);
-  MuonSource shSource(1, 0.1, 5e5);
+  MuonSource wpSource(5, C("wpRate"), 15);
+  MuonSource adSource(1, C("adRate"), 5e3);
+  MuonSource shSource(1, C("shRate"), 5e5);
 
   muonSeq.addSources({&wpSource, &adSource, &shSource});
 
@@ -25,9 +40,9 @@ int main()
   AdSink adSink(&adTree);
   Sequencer adSeq(&adSink);
 
-  SingleSource plsSource(30, 2);
-  SingleSource dlsSource(1, 9);
-  IbdSource ibdSource(0.1);
+  SingleSource plsSource(C("plsRate"), 2);
+  SingleSource dlsSource(C("dlsRate"), 9);
+  IbdSource ibdSource(C("ibdRate"));
 
   adSeq.addSources({&plsSource, &dlsSource, &ibdSource});
 
