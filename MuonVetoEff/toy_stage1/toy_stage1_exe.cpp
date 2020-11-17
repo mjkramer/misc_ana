@@ -13,23 +13,23 @@ int main()
 
   TTree muonTree("muons", "muons");
   MuonSink muonSink(&muonTree);
-  Sequencer muonSeq(muonSink);
+  Sequencer muonSeq(&muonSink);
 
   MuonSource wpSource(5, 180, 15);
-  muonSeq.addSource(wpSource);
   MuonSource adSource(1, 20, 5e3);
-  muonSeq.addSource(adSource);
   MuonSource shSource(1, 0.1, 5e5);
-  muonSeq.addSource(shSource);
+
+  muonSeq.addSources({&wpSource, &adSource, &shSource});
 
   TTree adTree("physics_AD1", "physics_AD1");
   AdSink adSink(&adTree);
-  Sequencer adSeq(adSink);
+  Sequencer adSeq(&adSink);
 
   SingleSource plsSource(30, 2);
-  adSeq.addSource(plsSource);
   SingleSource dlsSource(1, 9);
-  adSeq.addSource(dlsSource);
+  IbdSource ibdSource(0.1);
+
+  adSeq.addSources({&plsSource, &dlsSource, &ibdSource});
 
   ISequencer* seqs[] = {&muonSeq, &adSeq};
   constexpr int n_seq = sizeof(seqs)/sizeof(seqs[0]);

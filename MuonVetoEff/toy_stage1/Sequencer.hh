@@ -7,6 +7,7 @@
 #include <TRandom3.h>
 
 #include <cstdint>
+#include <initializer_list>
 #include <tuple>
 #include <vector>
 
@@ -81,12 +82,12 @@ struct ISequencer {
 template <class EventT>
 class Sequencer : virtual public ISequencer {
 public:
-  Sequencer(IEventSink<EventT>& sink);
-  void addSource(IEventSource<EventT>& source);
+  Sequencer(IEventSink<EventT>* sink);
+  void addSources(std::initializer_list<IEventSource<EventT>*> sources);
   Time next() override;
 
 private:
-  IEventSink<EventT>& sink_;
+  IEventSink<EventT>* sink_;
   std::vector<IEventSource<EventT>*> sources_;
   std::vector<std::tuple<Time, EventT>> lastEvents_;
 
@@ -94,13 +95,14 @@ private:
 };
 
 template <class EventT>
-Sequencer<EventT>::Sequencer(IEventSink<EventT>& sink) :
+Sequencer<EventT>::Sequencer(IEventSink<EventT>* sink) :
   sink_(sink) {}
 
 template <class EventT>
-void Sequencer<EventT>::addSource(IEventSource<EventT>& source)
+void Sequencer<EventT>::addSources(std::initializer_list<IEventSource<EventT>*> sources)
 {
-  sources_.push_back(&source);
+  for (auto source : sources)
+    sources_.push_back(source);
 }
 
 template <class EventT>
@@ -122,7 +124,7 @@ Time Sequencer<EventT>::next()
   }
 
   auto [time, event] = lastEvents_[iEarliest];
-  sink_.sink(event);
+  sink_->sink(event);
 
   lastEvents_[iEarliest] = sources_[iEarliest]->next();
 
