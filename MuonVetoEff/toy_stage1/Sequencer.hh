@@ -7,7 +7,6 @@
 #include <TRandom3.h>
 
 #include <cstdint>
-#include <initializer_list>
 #include <tuple>
 #include <vector>
 
@@ -83,7 +82,7 @@ template <class EventT>
 class Sequencer : virtual public ISequencer {
 public:
   Sequencer(IEventSink<EventT>* sink);
-  void addSources(std::initializer_list<IEventSource<EventT>*> sources);
+  void addSources(std::vector<IEventSource<EventT>*> sources);
   Time next() override;
 
 private:
@@ -99,7 +98,7 @@ Sequencer<EventT>::Sequencer(IEventSink<EventT>* sink) :
   sink_(sink) {}
 
 template <class EventT>
-void Sequencer<EventT>::addSources(std::initializer_list<IEventSource<EventT>*> sources)
+void Sequencer<EventT>::addSources(std::vector<IEventSource<EventT>*> sources)
 {
   for (auto source : sources)
     sources_.push_back(source);
@@ -137,3 +136,6 @@ void Sequencer<EventT>::prime()
   for (auto source : sources_)
     lastEvents_.push_back(source->next());
 }
+
+void run_sequencers(std::vector<ISequencer*> seqs,
+                    float runtime_s = 1e5);

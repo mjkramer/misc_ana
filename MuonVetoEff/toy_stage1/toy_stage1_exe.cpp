@@ -5,7 +5,7 @@
 #include <TH1F.h>
 #include <TTree.h>
 
-const float RUNTIME_SEC = 1e5;
+const float RUNTIME_S = 1e5;
 
 int main()
 {
@@ -31,29 +31,14 @@ int main()
 
   adSeq.addSources({&plsSource, &dlsSource, &ibdSource});
 
-  ISequencer* seqs[] = {&muonSeq, &adSeq};
-  constexpr int n_seq = sizeof(seqs)/sizeof(seqs[0]);
-  bool done[n_seq] = {0};
-  int remaining = n_seq;
-  const Time tEnd = Time().shifted_us(1e6 * RUNTIME_SEC);
-
-  while (remaining > 0) {
-    for (int iseq = 0; iseq < n_seq; ++iseq) {
-      if (done[iseq])
-        continue;
-      Time t = seqs[iseq]->next();
-      if (t > tEnd) {
-        done[iseq] = true;
-        --remaining;
-      }
-    }
-  }
+  run_sequencers({&muonSeq, &adSeq},
+                 RUNTIME_S);
 
   muonTree.Write();
   adTree.Write();
 
   TH1F h_livetime("h_livetime", "Livetime (s)", 1, 0, 1);
-  h_livetime.SetBinContent(1, RUNTIME_SEC);
+  h_livetime.SetBinContent(1, RUNTIME_S);
   h_livetime.Write();
 
   return 0;
