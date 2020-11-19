@@ -81,7 +81,7 @@ template <class EventT>
 class Sequencer : virtual public ISequencer {
 public:
   Sequencer(IEventSink<EventT>* sink);
-  void addSources(std::vector<IEventSource<EventT>*> sources);
+  void addSources(const std::vector<IEventSource<EventT>*>& sources);
   TTimeStamp next() override;
 
 private:
@@ -97,10 +97,9 @@ Sequencer<EventT>::Sequencer(IEventSink<EventT>* sink) :
   sink_(sink) {}
 
 template <class EventT>
-void Sequencer<EventT>::addSources(std::vector<IEventSource<EventT>*> sources)
+void Sequencer<EventT>::addSources(const std::vector<IEventSource<EventT>*>& sources)
 {
-  for (auto source : sources)
-    sources_.push_back(source);
+  sources_ = sources;
 }
 
 template <class EventT>
@@ -136,5 +135,5 @@ void Sequencer<EventT>::prime()
     lastEvents_.push_back(source->next());
 }
 
-void run_sequencers(std::vector<ISequencer*> seqs,
+void run_sequencers(const std::vector<ISequencer*>& seqs,
                     float runtime_s = 1e5);

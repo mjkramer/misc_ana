@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <vector>
 
-void run_sequencers(std::vector<ISequencer*> seqs,
+void run_sequencers(const std::vector<ISequencer*>& seqs,
                     float runtime_s)
 {
   const int n_seq = seqs.size();

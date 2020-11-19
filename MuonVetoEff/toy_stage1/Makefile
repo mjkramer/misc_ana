@@ -72,7 +72,9 @@ $(DICTS_DIR)/%_hh_ACLiC_dict.o: %.hh $(DICTS_DIR)/%_LinkDef.h
 	@mv $(LIBNAME)_$(notdir $*)_hh_ACLiC_dict_rdict.pcm $(BUILD_DIR)
 
 $(DICTS_DIR)/%_LinkDef.h:
-	$(shell sed 's!PLACEHOLDER!$*.hh!' cling/LinkDef.h > $@)
+	@echo "#pragma link C++ nestedclasses;" >> $@
+	@echo "#pragma link C++ nestedtypedefs;" >> $@
+	@echo '#pragma link C++ defined_in "$*.hh";' >> $@
 
 .SECONDEXPANSION:
 

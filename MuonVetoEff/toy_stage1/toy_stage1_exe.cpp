@@ -52,9 +52,6 @@ int main(int argc, const char** argv)
   run_sequencers({&muonSeq, &adSeq},
                  RUNTIME_S);
 
-  muonTree.Write();
-  adTree.Write();
-
   TH1F h_livetime("h_livetime", "Livetime (s)", 1, 0, 1);
   h_livetime.SetBinContent(1, RUNTIME_S);
   h_livetime.Write();
