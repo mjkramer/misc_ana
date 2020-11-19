@@ -2,7 +2,7 @@
 
 ALL_PRODUCTS := toy_stage1
 
-toy_stage1_DIRS := . Framework/
+toy_stage1_DIRS := .
 
 BUILD_DIR ?= _build
 

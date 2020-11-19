@@ -2,9 +2,8 @@
 
 #include "NewIO.hh"
 
-#include "Framework/Util.hh"
-
 #include <TRandom3.h>
+#include <TTimeStamp.h>
 
 #include <cstdint>
 #include <tuple>
@@ -12,7 +11,7 @@
 
 template <class EventT>
 struct IEventSource {
-  virtual std::tuple<Time, EventT> next() = 0;
+  virtual std::tuple<TTimeStamp, EventT> next() = 0;
 };
 
 template <class EventT>
@@ -75,7 +74,7 @@ void TreeSink<TreeWrapperT>::sink(typename TreeWrapperT::EventType event)
 }
 
 struct ISequencer {
-  virtual Time next() = 0;
+  virtual TTimeStamp next() = 0;
 };
 
 template <class EventT>
@@ -83,12 +82,12 @@ class Sequencer : virtual public ISequencer {
 public:
   Sequencer(IEventSink<EventT>* sink);
   void addSources(std::vector<IEventSource<EventT>*> sources);
-  Time next() override;
+  TTimeStamp next() override;
 
 private:
   IEventSink<EventT>* sink_;
   std::vector<IEventSource<EventT>*> sources_;
-  std::vector<std::tuple<Time, EventT>> lastEvents_;
+  std::vector<std::tuple<TTimeStamp, EventT>> lastEvents_;
 
   void prime();
 };
@@ -105,12 +104,12 @@ void Sequencer<EventT>::addSources(std::vector<IEventSource<EventT>*> sources)
 }
 
 template <class EventT>
-Time Sequencer<EventT>::next()
+TTimeStamp Sequencer<EventT>::next()
 {
   if (lastEvents_.size() == 0)
     prime();
 
-  Time earliestTime {UINT32_MAX, UINT32_MAX};
+  TTimeStamp earliestTime {INT32_MAX, 0};
   int iEarliest;
 
   for (int i = 0; i < sources_.size(); ++i) {

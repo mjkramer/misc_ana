@@ -3,11 +3,12 @@
 #include "AdGen.hh"
 #include "MuonGen.hh"
 
-#include "Framework/ConfigTool.hh"
-
 #include <TFile.h>
 #include <TH1F.h>
 #include <TTree.h>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <iostream>
 
@@ -21,8 +22,10 @@ int main(int argc, const char** argv)
     return 1;
   }
 
-  Config config(argv[1]);
-#define C(key) config.get<float>(key)
+  boost::property_tree::ptree pt;
+  boost::property_tree::ini_parser::read_ini(argv[1], pt);
+
+#define C(key) pt.get<float>(key)
 
   TFile outFile(argv[2], "RECREATE");
 

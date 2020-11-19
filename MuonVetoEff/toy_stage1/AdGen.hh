@@ -2,6 +2,7 @@
 
 #include "NewIO.hh"
 #include "Sequencer.hh"
+#include "Util.hh"
 
 #include <TRandom3.h>
 
@@ -32,25 +33,25 @@ struct AdTree : virtual TreeWrapper<AdEvent> {
 class SingleSource : virtual public RanEventSource<AdEvent> {
 public:
   SingleSource(float rate_hz, float energy);
-  std::tuple<Time, AdEvent> next() override;
+  std::tuple<TTimeStamp, AdEvent> next() override;
 
 private:
   float rate_hz_;
   float energy_;
-  Time last_;
+  TTimeStamp last_ = {0, 0};
 };
 
 SingleSource::SingleSource(float rate_hz, float energy) :
   rate_hz_(rate_hz), energy_(energy) {}
 
-std::tuple<Time, AdEvent> SingleSource::next()
+std::tuple<TTimeStamp, AdEvent> SingleSource::next()
 {
   double tToNext_s = ran().Exp(1/rate_hz_);
-  last_ = last_.shifted_us(1e6 * tToNext_s);
+  shift_timestamp(last_, tToNext_s);
 
   AdEvent e;
-  e.trigSec = last_.s;
-  e.trigNanoSec = last_.ns;
+  e.trigSec = last_.GetSec();
+  e.trigNanoSec = last_.GetNanoSec();
   e.energy = energy_;
 
   return {last_, e};
@@ -59,35 +60,35 @@ std::tuple<Time, AdEvent> SingleSource::next()
 class IbdSource : virtual public RanEventSource<AdEvent> {
 public:
   IbdSource(float rate_hz);
-  std::tuple<Time, AdEvent> next() override;
+  std::tuple<TTimeStamp, AdEvent> next() override;
 
 private:
   float rate_hz_;
-  Time last_;
+  TTimeStamp last_ = {0, 0};
   bool nextIsDelayed_ = false;
 };
 
 IbdSource::IbdSource(float rate_hz) :
   rate_hz_(rate_hz) {}
 
-std::tuple<Time, AdEvent> IbdSource::next()
+std::tuple<TTimeStamp, AdEvent> IbdSource::next()
 {
   AdEvent e;
 
   if (nextIsDelayed_) {
-    last_ = last_.shifted_us(100);
+    shift_timestamp(last_, 100e-6);
     e.energy = 8;
     nextIsDelayed_ = false;
   }
   else {
     double tToNext_s = ran().Exp(1/rate_hz_);
-    last_ = last_.shifted_us(1e6 * tToNext_s);
+    shift_timestamp(last_, tToNext_s);
     e.energy = 3;
     nextIsDelayed_ = true;
   }
 
-  e.trigSec = last_.s;
-  e.trigNanoSec = last_.ns;
+  e.trigSec = last_.GetSec();
+  e.trigNanoSec = last_.GetNanoSec();
 
   return {last_, e};
 }

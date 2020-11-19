@@ -2,6 +2,7 @@
 
 #include "NewIO.hh"
 #include "Sequencer.hh"
+#include "Util.hh"
 
 #include <TRandom3.h>
 
@@ -30,24 +31,27 @@ struct MuonTree : virtual TreeWrapper<MuonEvent> {
 class MuonSource : virtual public RanEventSource<MuonEvent> {
 public:
   MuonSource(int det, float rate_hz, float strength);
-  std::tuple<Time, MuonEvent> next() override;
+  std::tuple<TTimeStamp, MuonEvent> next() override;
 
 private:
   int det_;
   float rate_hz_;
   float strength_;
-  Time last_;
+  TTimeStamp last_ = {0, 0};
 };
 
 MuonSource::MuonSource(int det, float rate_hz, float strength) :
   det_(det), rate_hz_(rate_hz), strength_(strength) {}
 
-std::tuple<Time, MuonEvent> MuonSource::next()
+std::tuple<TTimeStamp, MuonEvent> MuonSource::next()
 {
   double tToNext_s = ran().Exp(1/rate_hz_);
-  last_ = last_.shifted_us(1e6 * tToNext_s);
+  shift_timestamp(last_, tToNext_s);
   return {last_,
-          {det_, last_.s, last_.ns, strength_}};
+          {det_,
+           UInt_t(last_.GetSec()),
+           UInt_t(last_.GetNanoSec()),
+           strength_}};
 }
 
 using MuonSink = TreeSink<MuonTree>;
