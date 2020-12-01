@@ -261,7 +261,25 @@ def plot_the_bump(cutname):
     return c
 
 
+def get_totbkg(study, cutname):
+    result = [None, None, None]
+
+    for bkg in ["Acc", "Li9", "Amc", "Fn", "Aln"]:
+        hists = get_corrspecs(study, cutname, specname=bkg)
+        for hall in [1, 2, 3]:
+            if result[hall-1] is None:
+                name = f"h_TotBkg_{study}_{cutname}_eh{hall}"
+                result[hall-1] = keep(hists[hall-1].Clone(name))
+            else:
+                result[hall-1].Add(hists[hall-1])
+
+    return result
+
+
 def get_corrspecs(study, cutname, specname="IBD"):
+    if specname == "TotBkg":
+        return get_totbkg(study, cutname)
+
     suffix = "" if specname == "IBD" else "Spec"
     hists = [None, None, None]
     f = R.TFile(f"fit_results/{study}/{cutname}/fit_shape_2d.root")
@@ -294,5 +312,5 @@ def compare_corrspec_3x2_all(specname="IBD", fudge=False):
 
 
 def compare_corrspec_3x2_all_all(fudge=False):
-    for specname in ["IBD", "Acc", "Li9", "Amc", "Fn", "Aln"]:
+    for specname in ["IBD", "Acc", "Li9", "Amc", "Fn", "Aln", "TotBkg"]:
         compare_corrspec_3x2_all(specname=specname, fudge=fudge)
