@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import ROOT as R
 
+from plot_fit_results import read_study
+
 
 T13_ROWS = {
     "obs_evt": 1,
@@ -80,3 +82,8 @@ def dump_spectra_integrals(study, nADs=8):
 
     df = pd.DataFrame(data)
     df.to_csv(f"summaries/{study}.spec_int.{nADs}ad.csv")
+
+
+def dump_fit_results(study):
+    df = read_study(study)
+    df.to_csv(f"summaries/{study}.csv")

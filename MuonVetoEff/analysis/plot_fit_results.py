@@ -120,7 +120,7 @@ def read_study(study):
     return pd.DataFrame(data)
 
 
-def read_study_csv(csvfile):
+def read_csv(csvfile):
     "Reads what we get from df.to_csv(csvfile)"
     return pd.read_csv(csvfile, index_col=0)
 
@@ -184,7 +184,7 @@ def plot_dm2_unc(df, tag):
 
 
 def plot_all(tag):
-    df = read_study_csv(f"summaries/{tag}.csv")
+    df = read_csv(f"summaries/{tag}.csv")
     # plot_s2t_best(df, tag)
     # plot_dm2_best(df, tag)
     # plot_s2t_unc(df, tag)
@@ -204,7 +204,7 @@ def detno(hall, det):
 
 
 def read_quantity(tag, qty, nADs=8):
-    return read_study_csv(f"summaries/{tag}.{qty}.{nADs}ad.csv")
+    return read_csv(f"summaries/{tag}.{qty}.{nADs}ad.csv")
 
 
 def plot2d_quantity(tag, quantity, title, hall, det, is_data, nADs=8):
