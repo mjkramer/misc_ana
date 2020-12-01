@@ -126,16 +126,17 @@ def read_csv(csvfile):
 
 
 # https://stackoverflow.com/questions/43525546/plotting-pcolormesh-from-filtered-pandas-dataframe-for-defined-x-y-ranges-even
-def plot2d(df, expr, title, name, tag):
+def plot2d(df, expr, title, name, tag, **kwargs):
     df = df.copy()
     df["vals"] = df.eval(expr)
+    vmin, vmax = df["vals"].min(), df["vals"].max()
     piv = df.pivot_table(index="time_s", columns="cut_pe", values="vals")
     print(piv)
 
     # plt.figure(figsize=[9.6, 7.2])
     plt.figure()
-    plt.pcolormesh(piv.columns, piv.index, piv.values,
-                   shading="nearest")
+    result = plt.pcolormesh(piv.columns, piv.index, piv.values,
+                            shading="nearest", **kwargs)
     plt.colorbar()
     plt.title(title)
     plt.xlabel("Shower muon definition [pe]")
@@ -147,40 +148,41 @@ def plot2d(df, expr, title, name, tag):
     fname = f"gfx/{tag}/{name}.pdf"
     os.system(f"mkdir -p {os.path.dirname(fname)}")
     plt.savefig(fname)
+    return result, vmin, vmax
 
 
-def plot_s2t_best(df, tag):
+def plot_s2t_best(df, tag, **kwargs):
     return plot2d(df, "s2t_best", r"Best fit $\sin^2 2\theta_{13}$",
-                  "s2t_best", tag)
+                  "s2t_best", tag, **kwargs)
 
 
-def plot_dm2_best(df, tag):
+def plot_dm2_best(df, tag, **kwargs):
     return plot2d(df, "dm2_best", r"Best fit $\Delta m^2_{ee}$",
-                  "dm2_best", tag)
+                  "dm2_best", tag, **kwargs)
 
 
-def plot_s2t_mid(df, tag):
+def plot_s2t_mid(df, tag, **kwargs):
     return plot2d(df, "0.5 * (s2t_max1sigma + s2t_min1sigma)",
                   r"Middle of 1$\sigma$ range for $\sin^2 2\theta_{13}$",
-                  "s2t_mid", tag)
+                  "s2t_mid", tag, **kwargs)
 
 
-def plot_dm2_mid(df, tag):
+def plot_dm2_mid(df, tag, **kwargs):
     return plot2d(df, "0.5 * (dm2_max1sigma + dm2_min1sigma)",
                   r"Middle of 1$\sigma$ range for $\Delta m^2_{ee}$",
-                  "dm2_mid", tag)
+                  "dm2_mid", tag, **kwargs)
 
 
-def plot_s2t_unc(df, tag):
+def plot_s2t_unc(df, tag, **kwargs):
     return plot2d(df, "0.5 * (s2t_max1sigma - s2t_min1sigma)",
                   r"1$\sigma$ uncertainty on $\sin^2 2\theta_{13}$",
-                  "s2t_unc", tag)
+                  "s2t_unc", tag, **kwargs)
 
 
-def plot_dm2_unc(df, tag):
+def plot_dm2_unc(df, tag, **kwargs):
     return plot2d(df, "0.5 * (dm2_max1sigma - dm2_min1sigma)",
                   r"1$\sigma$ uncertainty on $\Delta m^2_{ee}$",
-                  "dm2_unc", tag)
+                  "dm2_unc", tag, **kwargs)
 
 
 def plot_all(tag):
@@ -207,36 +209,57 @@ def read_quantity(tag, qty, nADs=8):
     return read_csv(f"summaries/{tag}.{qty}.{nADs}ad.csv")
 
 
-def plot2d_quantity(tag, quantity, title, hall, det, is_data, nADs=8):
+def plot2d_quantity(tag, quantity, title, hall, det, is_data, nADs=8,
+                    **kwargs):
     df = read_quantity(tag, quantity, nADs)
     n = detno(hall, det)
     what = "data" if is_data else "toy"
     return plot2d(df, f"AD{n}", f"{title}, EH{hall}-AD{det} ({nADs}AD {what})",
-                  f"{quantity}.eh{hall}_ad{det}.{nADs}ad", tag)
+                  f"{quantity}.eh{hall}_ad{det}.{nADs}ad", tag, **kwargs)
 
 
-def plot_veto_eff(tag, hall, det, is_data, nADs=8):
+def plot_veto_eff(tag, hall, det, is_data, nADs=8, **kwargs):
     return plot2d_quantity(tag, "veto_eff", "Muon veto efficiency",
-                           hall, det, is_data, nADs)
+                           hall, det, is_data, nADs, **kwargs)
 
 
-def plot_li9_bkg(tag, hall, det, is_data, nADs=8):
+def plot_li9_bkg(tag, hall, det, is_data, nADs=8, **kwargs):
     return plot2d_quantity(tag, "li9_bkg", r"Daily $^9$Li rate",
-                           hall, det, is_data, nADs)
+                           hall, det, is_data, nADs, **kwargs)
 
 
-def plot_obs_evt(tag, hall, det, is_data, nADs=8):
+def plot_obs_evt(tag, hall, det, is_data, nADs=8, **kwargs):
     return plot2d_quantity(tag, "obs_evt", "# of IBD candidates",
-                           hall, det, is_data, nADs)
+                           hall, det, is_data, nADs, **kwargs)
 
 
-def plot_spec_int(tag, hall, det, is_data, nADs=8):
+def plot_spec_int(tag, hall, det, is_data, nADs=8, **kwargs):
     return plot2d_quantity(tag, "spec_int", "IBD spectrum integral",
-                           hall, det, is_data, nADs)
+                           hall, det, is_data, nADs, **kwargs)
 
 
-def plot_all_quantities():
-    for func in [plot_veto_eff, plot_li9_bkg, plot_obs_evt]:
+def plot_all_quantities(same_scale=False):
+    for func in [plot_veto_eff, plot_li9_bkg, plot_obs_evt, plot_spec_int]:
         for hall, det in [(1, 1), (3, 1)]:
-            func("oct20_data", hall, det, True)
-            func("oct20_yolo3", hall, det, False)
+            _, min1, max1 = func("oct20v3_data", hall, det, True)
+            _, min2, max2 = func("oct20v3_yolo3", hall, det, False)
+            if same_scale:
+                vmin = min(min1, min2)
+                vmax = max(max1, max2)
+                func("oct20v3_data", hall, det, True, vmin=vmin, vmax=vmax)
+                func("oct20v3_yolo3", hall, det, False, vmin=vmin, vmax=vmax)
+
+
+def plot_all_fits(same_scale=False):
+    df_data = read_study_csv("summaries/oct20v3_data.csv")
+    df_toy = read_study_csv("summaries/oct20v3_yolo3.csv")
+    for func in [plot_s2t_mid, plot_dm2_mid,
+                 plot_s2t_best, plot_dm2_best,
+                 plot_s2t_unc, plot_dm2_unc]:
+        _, min1, max1 = func(df_data, "oct20v3_data")
+        _, min2, max2 = func(df_toy, "oct20v3_yolo3")
+        if same_scale:
+            vmin = min(min1, min2)
+            vmax = max(max1, max2)
+            func(df_data, "oct20v3_data", vmin=vmin, vmax=vmax)
+            func(df_toy, "oct20v3_yolo3", vmin=vmin, vmax=vmax)
