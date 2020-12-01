@@ -4,6 +4,9 @@ import os
 import ROOT as R
 from numpy import format_float_scientific
 
+DATA_STUDY_NAME = "oct20v3_data"
+TOY_STUDY_NAME = "oct20v3_yolo4"
+
 
 # because automatic memory management is always soooooo helpful
 def keep(o):
@@ -30,8 +33,8 @@ def overlay_4x4(cutname):
     c.Divide(2, 2)
 
     # keep?
-    f_data = R.TFile(f"fit_results/oct20_data_withNom/{cutname}/fit_shape_2d.root")
-    f_toy = R.TFile(f"fit_results/oct20_yolo3_withNom/{cutname}/fit_shape_2d.root")
+    f_data = R.TFile(f"fit_results/{DATA_STUDY_NAME}/{cutname}/fit_shape_2d.root")
+    f_toy = R.TFile(f"fit_results/{TOY_STUDY_NAME}/{cutname}/fit_shape_2d.root")
 
     cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
 
@@ -64,7 +67,7 @@ def overlay_4x4(cutname):
 
 def overlay_4x4_all():
     os.system("mkdir -p gfx/overlay_4x4")
-    for path in glob("fit_results/oct20_data/*"):
+    for path in glob(f"fit_results/{DATA_STUDY_NAME}/*"):
         cutname = os.path.basename(path)
         c = overlay_4x4(cutname)
         c.SaveAs(f"gfx/overlay_4x4/overlay_4x4_{fix_cutname(cutname)}.png")
@@ -172,8 +175,8 @@ def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
                        1820, 1300))
     c.Divide(3, 2)
 
-    hs_data = func("oct20_data", cutname)
-    hs_toy = func("oct20_yolo3", cutname)
+    hs_data = func(DATA_STUDY_NAME, cutname)
+    hs_toy = func(TOY_STUDY_NAME, cutname)
 
     for hall in [1, 2, 3]:
         if fudge:
@@ -227,7 +230,7 @@ def compare_obs_3x2(cutname, **kwargs):
 def compare_obs_3x2_all(fudge=False):
     fudgeness = "_fudge" if fudge else ""
     os.system(f"mkdir -p gfx/compare_obs_3x2{fudgeness}")
-    for path in glob("fit_results/oct20_data/*"):
+    for path in glob(f"fit_results/{DATA_STUDY_NAME}/*"):
         cutname = os.path.basename(path)
         c = compare_obs_3x2(cutname, fudge=fudge)
         c.SaveAs(f"gfx/compare_obs_3x2{fudgeness}/compare_obs_3x2{fudgeness}_{fix_cutname(cutname)}.png")
@@ -245,8 +248,8 @@ def plot_the_bump(cutname):
     R.gStyle.SetOptStat(0)
     R.TH1.SetDefaultSumw2(True)
 
-    hs_data = get_eprompt_shapes("oct20_data", cutname)
-    hs_toy = get_eprompt_shapes("oct20_yolo3", cutname)
+    hs_data = get_eprompt_shapes(DATA_STUDY_NAME, cutname)
+    hs_toy = get_eprompt_shapes(TOY_STUDY_NAME, cutname)
 
     c = kept(R.TCanvas(f"c_bump_{cutname}", f"c_bump_{cutname}",
                        1820, 650))
@@ -289,7 +292,7 @@ def compare_corrspec_3x2(cutname, specname="IBD", **kwargs):
 def compare_corrspec_3x2_all(specname="IBD", fudge=False):
     fudgeness = "_fudge" if fudge else ""
     os.system(f"mkdir -p gfx/compare_corrspec_{specname}_3x2{fudgeness}")
-    for path in glob("fit_results/oct20_data/*"):
+    for path in glob(f"fit_results/{DATA_STUDY_NAME}/*"):
         cutname = os.path.basename(path)
         c = compare_corrspec_3x2(cutname, specname=specname, fudge=fudge)
         c.SaveAs(f"gfx/compare_corrspec_{specname}_3x2{fudgeness}/compare_corrspec_{specname}_3x2{fudgeness}_{fix_cutname(cutname)}.png")
