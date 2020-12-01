@@ -14,6 +14,10 @@ struct ToyMuVetoToy {
   double tVetoAd = 1402e-6;
   double tVetoSh = 0.4004;
 
+  unsigned int wpCut_nhit = 12;
+  double adCut_pe = 3000;
+  double shCut_pe = 3e5;
+
   enum class MuonType {
     Wp, Ad, Sh
   };
@@ -63,11 +67,11 @@ void ToyMuVetoToy::insert_muons(std::vector<Muon>& muons, TFile& stage1_file, in
     double time = trigSec + 1e-9*trigNanoSec;
 
     if ((detector == 5 || detector == 6) &&
-        strength > 12) {
+        strength > wpCut_nhit) {
       muons.push_back({MuonType::Wp, time});
-    } else if (detector == det && strength > 3e5) {
+    } else if (detector == det && strength > shCut_pe) {
       muons.push_back({MuonType::Sh, time});
-    } else if (detector == det && strength > 3000) {
+    } else if (detector == det && strength > adCut_pe) {
       muons.push_back({MuonType::Ad, time});
     }
   }
@@ -78,7 +82,7 @@ double ToyMuVetoToy::vetoEff(const char* stage1_path, int det)
   std::vector<Muon> muons;
 
   TFile stage1_file(stage1_path);
-  insert_muons(muons, stage1_file);
+  insert_muons(muons, stage1_file, det);
 
   double lastWindowEnd = 0;
   double totalVetoTime = 0;
@@ -98,4 +102,11 @@ double ToyMuVetoToy::vetoEff(const char* stage1_path, int det)
   const float livetime = h_livetime->GetBinContent(1);
 
   return 1 - totalVetoTime / livetime;
+}
+
+void toy_muveto_toy(const char* stage1_path, float tVetoSh)
+{
+  ToyMuVetoToy tmvt;
+  tmvt.tVetoSh = tVetoSh;
+  tmvt.vetoEff(stage1_path, 1);
 }
