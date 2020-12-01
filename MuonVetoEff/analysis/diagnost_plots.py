@@ -19,17 +19,12 @@ def keep(o):
     return o
 
 
-def kept(o):
-    keep(o)
-    return o
-
-
 def overlay_4x4(cutname):
     parts = cutname.split("_")
     cut_pe = float(parts[0][:-2])
     time_s = float(parts[1][:-1])
 
-    c = kept(R.TCanvas(f"c_{cutname}", f"c_{cutname}", 1400, 1000))
+    c = keep(R.TCanvas(f"c_{cutname}", f"c_{cutname}", 1400, 1000))
     c.Divide(2, 2)
 
     # keep?
@@ -75,10 +70,10 @@ def overlay_4x4_all():
 
 def overlay_spectra(f, istage, imode, ipred, title):
     stagename = "sum" if istage == -1 else f"stage{istage}"
-    h_obs = kept(f.Get(f"h_final_obs_{stagename}_mode{imode}_{ipred}"))
-    h_pred = kept(f.Get(f"h_final_pred_{stagename}_mode{imode}_{ipred}"))
-    h_null = kept(f.Get(f"h_final_pred_null_{stagename}_mode{imode}_{ipred}"))
-    h_nom = kept(f.Get(f"h_final_pred_nom_{stagename}_mode{imode}_{ipred}"))
+    h_obs = keep(f.Get(f"h_final_obs_{stagename}_mode{imode}_{ipred}"))
+    h_pred = keep(f.Get(f"h_final_pred_{stagename}_mode{imode}_{ipred}"))
+    h_null = keep(f.Get(f"h_final_pred_null_{stagename}_mode{imode}_{ipred}"))
+    h_nom = keep(f.Get(f"h_final_pred_nom_{stagename}_mode{imode}_{ipred}"))
 
     # print(h_obs.GetFillStyle(), h_pred.GetFillStyle(), h_null.GetFillStyle(), h_nom.GetFillStyle())
 
@@ -104,7 +99,7 @@ def overlay_spectra(f, istage, imode, ipred, title):
     # ratio = h_obs.GetTitle()
 
     # h_null.SetTitle(f"{title} ({ratio})")
-    # can = kept(R.TCanvas())
+    # can = keep(R.TCanvas())
     h_null.Draw("hist")
     h_nom.Draw("hist same")
     h_pred.Draw("hist same")
@@ -116,7 +111,7 @@ def overlay_spectra(f, istage, imode, ipred, title):
     h_obs.SetTitle("Observed")
 
     # can.BuildLegend(0.3, 0.21, 0.3, 0.21, "", "L")
-    leg = kept(R.TLegend(0.65, 0.65, 0.88, 0.88))
+    leg = keep(R.TLegend(0.65, 0.65, 0.88, 0.88))
     leg.AddEntry(h_obs, "", "P")
     leg.AddEntry(h_pred, "", "L")
     leg.AddEntry(h_nom, "", "L")
@@ -150,7 +145,7 @@ def get_eprompt_shapes(study, cutname):
             for det in [1, 2, 3, 4] if hall == 3 else [1, 2]:
                 h = f.Get(f"h_ibd_eprompt_inclusive_eh{hall}_ad{det}")
                 if hists[hall-1] is None:
-                    hists[hall-1] = kept(h.Clone(f"h_eh{hall}"))
+                    hists[hall-1] = keep(h.Clone(f"h_eh{hall}"))
                 else:
                     hists[hall-1].Add(h)
     return hists
@@ -171,7 +166,7 @@ def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
     time_s = float(parts[1][:-1])
     cut_pe_str = format_float_scientific(cut_pe, exp_digits=1)
 
-    c = kept(R.TCanvas(f"c_{desc}_{cutname}{fudgeness}", f"c_{desc}_{cutname}{fudgeness}",
+    c = keep(R.TCanvas(f"c_{desc}_{cutname}{fudgeness}", f"c_{desc}_{cutname}{fudgeness}",
                        1820, 1300))
     c.Divide(3, 2)
 
@@ -192,7 +187,7 @@ def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
         ymax = max(hs_data[hall-1].GetMaximum(),
                    hs_toy[hall-1].GetMaximum())
         hs_data[hall-1].GetYaxis().SetRangeUser(0, 1.1 * ymax)
-        leg = kept(R.TLegend(0.77, 0.80, 0.88, 0.88))
+        leg = keep(R.TLegend(0.77, 0.80, 0.88, 0.88))
         leg.AddEntry(hs_data[hall-1], "Data", "L")
         leg.AddEntry(hs_toy[hall-1], "Toy", "L")
         leg.SetBorderSize(0)
@@ -201,8 +196,8 @@ def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
         R.gPad.Update()
 
         c.cd(hall + 3)
-        hdatnorm = kept(hs_data[hall-1].Clone())
-        htoynorm = kept(hs_toy[hall-1].Clone())
+        hdatnorm = keep(hs_data[hall-1].Clone())
+        htoynorm = keep(hs_toy[hall-1].Clone())
         hdatnorm.Scale(1./hdatnorm.Integral())
         htoynorm.Scale(1./htoynorm.Integral())
         hdatnorm.SetTitle(basetitle + " (normalized)")
@@ -211,7 +206,7 @@ def compare_func_3x2(cutname, fudge=False, func=get_eprompt_shapes, desc="obs"):
         ymax = max(hdatnorm.GetMaximum(),
                    htoynorm.GetMaximum())
         hdatnorm.GetYaxis().SetRangeUser(0, 1.1 * ymax)
-        leg = kept(R.TLegend(0.77, 0.80, 0.88, 0.88))
+        leg = keep(R.TLegend(0.77, 0.80, 0.88, 0.88))
         leg.AddEntry(hdatnorm, "Data", "L")
         leg.AddEntry(htoynorm, "Toy", "L")
         leg.SetBorderSize(0)
@@ -251,7 +246,7 @@ def plot_the_bump(cutname):
     hs_data = get_eprompt_shapes(DATA_STUDY_NAME, cutname)
     hs_toy = get_eprompt_shapes(TOY_STUDY_NAME, cutname)
 
-    c = kept(R.TCanvas(f"c_bump_{cutname}", f"c_bump_{cutname}",
+    c = keep(R.TCanvas(f"c_bump_{cutname}", f"c_bump_{cutname}",
                        1820, 650))
     c.Divide(3, 1)
 
@@ -276,7 +271,7 @@ def get_corrspecs(study, cutname, specname="IBD"):
                 detno = 2*(hall-1) + det
                 h = f.Get(f"Corr{specname}Evts{suffix}_stage{istage}_AD{detno}")
                 if hists[hall-1] is None:
-                    hists[hall-1] = kept(h.Clone(f"h_{specname}_{study}_{cutname}_eh{hall}"))
+                    hists[hall-1] = keep(h.Clone(f"h_{specname}_{study}_{cutname}_eh{hall}"))
                 else:
                     hists[hall-1].Add(h)
     return hists
