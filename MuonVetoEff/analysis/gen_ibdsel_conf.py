@@ -18,7 +18,7 @@ def main():
     config = ConfigFile(template_path())
 
     for line in open(args.cut_list_file):
-        _template_dir, cut_pe, time_s = line.strip().split()
+        cut_pe, time_s = line.strip().split()
         config["ibdShowerMuChgCut"] = float(cut_pe)
         config["ibdShowerMuPostVeto_us"] = float(time_s) * 1e6
         tag = os.path.basename(args.outdir)
