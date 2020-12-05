@@ -49,10 +49,21 @@ class DqPlotter:
         return [self.df_results.query(f"detector == {det}")[column].values
                 for det in self.dets]
 
+    def fudged_errors(self, yss, frac_err):
+        return [frac_err * ys / np.sqrt(self.livetimes)
+                for ys in yss]
+
     def plot_veto_eff(self):
         yss = self.results_vals("vetoEff")
-        yerrs = [0.0005 * ys / np.sqrt(self.livetimes)
-                 for ys in yss]
-        print(yss)
-        print(yerrs)
+        yerrs = self.fudged_errors(yss, 0.0005)
         return self.do_plot(yss, "Muon veto efficiency", yerrs=yerrs)
+
+    def plot_dmc_eff(self):
+        yss = self.results_vals("dmcEff")
+        yerrs = self.fudged_errors(yss, 0.00005)
+        return self.do_plot(yss, "Multiplicity cut efficiency", yerrs=yerrs)
+
+    def plot_acc_rate(self):
+        yss = self.results_vals("accDaily")
+        yerrs = self.results_vals("accDailyErr")
+        return self.do_plot(yss, "Accidentals per day", yerrs=yerrs)
