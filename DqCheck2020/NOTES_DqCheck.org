@@ -1,0 +1,17 @@
+* To check
+- [X] Confirm agreement between nBlah/(livetime_s * eDmcSingles * eMuSingles) and blahHz
+  Small difference (in ~6th sig fig) likely due to doubles being used in Calculator but floats being saved in the tree
+
+* Things to plot
+** Veto efficiency
+** DMC efficiency
+** Accidentals rate
+** preMuonHz
+** plusLikeHz
+** promptLikeHz
+** delayedLikeHz
+** IBD rate
+** Daily IBD energy
+** Tl208 energy
+** K40 energy
+** Dt
