@@ -13,3 +13,14 @@ def dets_for_stage2_file(stage2_path):
     hall = int(parts[-3][2])
     nADs = int(parts[-2][0])
     return dets_for_period(hall, nADs)
+
+
+def keep(o):
+    import ROOT as R
+    R.SetOwnership(o, False)     # don't delete it, python!
+    try:
+        o.SetDirectory(R.gROOT)  # don't delete it, root!
+        # o.SetDirectory(0)
+    except Exception:
+        pass                     # unless you weren't going to anyway
+    return o
