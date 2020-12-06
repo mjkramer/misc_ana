@@ -96,3 +96,17 @@ class DqPlotter:
     def plot_plusLike_rate(self):
         yss, yerrs = self.rate_with_error("plusLikeHz", "nPlusLikeSingles")
         return self.do_plot(yss, "Plus-like rate [Hz]", yerrs=yerrs)
+
+    def ibd_vals(self, column):
+        yss, yerrs = [], []
+        for df in self.df_ibds.values():
+            gb = df.groupby("day")
+            means = gb.mean()
+            uncs = gb.std() / np.sqrt(gb.count())
+            yss.append(means[column].values)
+            yerrs.append(uncs[column].values)
+        return yss, yerrs
+
+    def plot_ibd_dt(self):
+        yss, yerrs = self.ibd_vals("dt_us")
+        return self.do_plot(yss, "IBD dt [us]", yerrs=yerrs)
