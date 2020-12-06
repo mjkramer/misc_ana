@@ -11,7 +11,9 @@ class DqPlotter:
         self.hall = int(stage2_pbp_file.split(".")[-3][2])
         self.dets = dets_for_stage2_file(stage2_pbp_file)
 
-        self.df_results = read_root(stage2_pbp_file, "results")
+        self.df_results = read_root(stage2_pbp_file, "results") \
+            .rename(columns={"seq": "day"})
+
         self.df_run2day = pd.read_csv(drl_file, sep=r"\s+", header=None,
                                       names=["day", "hall", "runNo", "fileNo"],
                                       index_col=['runNo', 'fileNo'])
@@ -22,8 +24,8 @@ class DqPlotter:
         self.livetimes = self.df_results.query(f"detector == {self.dets[0]}")[
             "livetime_s"].values / (24*3600)
 
-        assert self.df_results["seq"].is_monotonic
-        self.days = self.df_results["seq"].unique()
+        assert self.df_results["day"].is_monotonic
+        self.days = self.df_results["day"].unique()
 
     def do_plot(self, yss, title, yerrs=None):
         fig, axes = plt.subplots(2, 1, sharex=True,
@@ -107,6 +109,28 @@ class DqPlotter:
             yerrs.append(uncs[column].values)
         return yss, yerrs
 
+    def ibd_rate(self):
+        yss, yerrs = [], []
+        for df in self.df_ibds.values():
+            counts = df.groupby("day").count()["eP"]  # eP or any col
+            times = self.df_results.set_index("day")["livetime_s"] \
+                                   .drop_duplicates() / (3600*24)
+            yss.append(counts / times)
+            yerrs.append(np.sqrt(counts) / times)
+        return yss, yerrs
+
     def plot_ibd_dt(self):
         yss, yerrs = self.ibd_vals("dt_us")
         return self.do_plot(yss, "IBD dt [us]", yerrs=yerrs)
+
+    def plot_ibd_ePrompt(self):
+        yss, yerrs = self.ibd_vals("eP")
+        return self.do_plot(yss, "IBD mean prompt energy", yerrs=yerrs)
+
+    def plot_ibd_eDelayed(self):
+        yss, yerrs = self.ibd_vals("eP")
+        return self.do_plot(yss, "IBD mean delayed energy", yerrs=yerrs)
+
+    def plot_ibd_rate(self):
+        yss, yerrs = self.ibd_rate()
+        return self.do_plot(yss, "IBD candidate daily rate", yerrs=yerrs)
