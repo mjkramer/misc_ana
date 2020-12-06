@@ -7,7 +7,8 @@ from util import dets_for_stage2_file
 
 
 class DqPlotter:
-    def __init__(self, stage2_pbp_file, drl_file):
+    def __init__(self, stage2_pbp_file, drl_file="data/dbd_runlist_p20a.txt",
+                 fits_dir="data/fits"):
         self.hall = int(stage2_pbp_file.split(".")[-3][2])
         self.dets = dets_for_stage2_file(stage2_pbp_file)
 
@@ -22,12 +23,25 @@ class DqPlotter:
                         for det in self.dets}
 
         self.livetimes = self.df_results.query(f"detector == {self.dets[0]}")[
-            "livetime_s"].values / (24*3600)
+            "livetime_s"].sort_index().values / (24*3600)
 
         assert self.df_results["day"].is_monotonic
         self.days = self.df_results["day"].unique()
 
-    def do_plot(self, yss, title, yerrs=None):
+        self.df_peaks = {}
+        for peak in ["k40", "tl208"]:
+            ndet = 4 if self.hall == 3 else 2
+            cols = [f"valAD{n}" for n in range(1, ndet+1)]
+            cols_err = [f"errAD{n}" for n in range(1, ndet+1)]
+            df_vals = pd.read_csv(f"{fits_dir}/{peak}.eh{self.hall}.csv",
+                                  sep=r"\s+",
+                                  names=["day"]+cols, index_col="day")
+            df_errs = pd.read_csv(f"{fits_dir}/{peak}_err.eh{self.hall}.csv",
+                                  sep=r"\s+",
+                                  names=["day"]+cols_err, index_col="day")
+            self.df_peaks[peak] = df_vals.join(df_errs)
+
+    def do_plot(self, yss, title, tag, yerrs=None):
         fig, axes = plt.subplots(2, 1, sharex=True,
                                  gridspec_kw={"height_ratios": [3, 1]})
 
@@ -46,11 +60,13 @@ class DqPlotter:
         axes[1].set_ylabel("Livetime[d]")
 
         fig.tight_layout()
+        fig.savefig(f"gfx/{tag}.eh{self.hall}.pdf")
 
         return fig, axes
 
     def results_vals(self, column):
-        return [self.df_results.query(f"detector == {det}")[column].values
+        return [self.df_results.query(f"detector == {det}")[column]
+                .sort_index().values
                 for det in self.dets]
 
     def fudged_errors(self, yss, frac_err):
@@ -60,17 +76,19 @@ class DqPlotter:
     def plot_veto_eff(self):
         yss = self.results_vals("vetoEff")
         yerrs = self.fudged_errors(yss, 0.0005)
-        return self.do_plot(yss, "Muon veto efficiency", yerrs=yerrs)
+        return self.do_plot(yss, "Muon veto efficiency", "vetoEff",
+                            yerrs=yerrs)
 
     def plot_dmc_eff(self):
         yss = self.results_vals("dmcEff")
         yerrs = self.fudged_errors(yss, 0.00005)
-        return self.do_plot(yss, "Multiplicity cut efficiency", yerrs=yerrs)
+        return self.do_plot(yss, "Multiplicity cut efficiency", "dmcEff",
+                            yerrs=yerrs)
 
     def plot_acc_rate(self):
         yss = self.results_vals("accDaily")
         yerrs = self.results_vals("accDailyErr")
-        return self.do_plot(yss, "Accidentals per day", yerrs=yerrs)
+        return self.do_plot(yss, "Accidentals per day", "acc", yerrs=yerrs)
 
     def rate_with_error(self, rate_col, count_col):
         rates = self.results_vals(rate_col)
@@ -84,20 +102,24 @@ class DqPlotter:
 
     def plot_preMuon_rate(self):
         yss, yerrs = self.rate_with_error("preMuonHz", "nPreMuons")
-        return self.do_plot(yss, "Pre-muon rate [Hz]", yerrs=yerrs)
+        return self.do_plot(yss, "Pre-muon rate [Hz]", "preMuonHz",
+                            yerrs=yerrs)
 
     def plot_promptLike_rate(self):
         yss, yerrs = self.rate_with_error("promptLikeHz", "nPromptLikeSingles")
-        return self.do_plot(yss, "Prompt-like rate [Hz]", yerrs=yerrs)
+        return self.do_plot(yss, "Prompt-like rate [Hz]", "promptLikeHz",
+                            yerrs=yerrs)
 
     def plot_delayedLike_rate(self):
         yss, yerrs = self.rate_with_error("delayedLikeHz",
                                           "nDelayedLikeSingles")
-        return self.do_plot(yss, "Delayed-like rate [Hz]", yerrs=yerrs)
+        return self.do_plot(yss, "Delayed-like rate [Hz]", "delayedLikeHz",
+                            yerrs=yerrs)
 
     def plot_plusLike_rate(self):
         yss, yerrs = self.rate_with_error("plusLikeHz", "nPlusLikeSingles")
-        return self.do_plot(yss, "Plus-like rate [Hz]", yerrs=yerrs)
+        return self.do_plot(yss, "Plus-like rate [Hz]", "plusLikeHz",
+                            yerrs=yerrs)
 
     def ibd_vals(self, column):
         yss, yerrs = [], []
@@ -105,8 +127,8 @@ class DqPlotter:
             gb = df.groupby("day")
             means = gb.mean()
             uncs = gb.std() / np.sqrt(gb.count())
-            yss.append(means[column].values)
-            yerrs.append(uncs[column].values)
+            yss.append(means[column].sort_index().values)
+            yerrs.append(uncs[column].sort_index().values)
         return yss, yerrs
 
     def ibd_rate(self):
@@ -115,22 +137,41 @@ class DqPlotter:
             counts = df.groupby("day").count()["eP"]  # eP or any col
             times = self.df_results.set_index("day")["livetime_s"] \
                                    .drop_duplicates() / (3600*24)
-            yss.append(counts / times)
-            yerrs.append(np.sqrt(counts) / times)
+            yss.append((counts / times).sort_index().values)
+            yerrs.append((np.sqrt(counts) / times).sort_index().values)
         return yss, yerrs
 
     def plot_ibd_dt(self):
         yss, yerrs = self.ibd_vals("dt_us")
-        return self.do_plot(yss, "IBD dt [us]", yerrs=yerrs)
+        return self.do_plot(yss, "IBD dt [us]", "dt", yerrs=yerrs)
 
     def plot_ibd_ePrompt(self):
         yss, yerrs = self.ibd_vals("eP")
-        return self.do_plot(yss, "IBD mean prompt energy", yerrs=yerrs)
+        return self.do_plot(yss, "IBD mean prompt energy", "ePrompt",
+                            yerrs=yerrs)
 
     def plot_ibd_eDelayed(self):
         yss, yerrs = self.ibd_vals("eP")
-        return self.do_plot(yss, "IBD mean delayed energy", yerrs=yerrs)
+        return self.do_plot(yss, "IBD mean delayed energy", "eDelayed",
+                            yerrs=yerrs)
 
     def plot_ibd_rate(self):
         yss, yerrs = self.ibd_rate()
-        return self.do_plot(yss, "IBD candidate daily rate", yerrs=yerrs)
+        return self.do_plot(yss, "IBD candidate daily rate", "ibdRate",
+                            yerrs=yerrs)
+
+    def peak_fits(self, peakname):
+        df = self.df_peaks[peakname]
+        yss = [df[f"valAD{det}"].sort_index().values
+               for det in self.dets]
+        yerrs = [df[f"errAD{det}"].sort_index().values
+                 for det in self.dets]
+        return yss, yerrs
+
+    def plot_k40(self):
+        yss, yerrs = self.peak_fits("k40")
+        return self.do_plot(yss, "K40 peak", "k40", yerrs=yerrs)
+
+    def plot_tl208(self):
+        yss, yerrs = self.peak_fits("tl208")
+        return self.do_plot(yss, "Tl208 peak", "tl208", yerrs=yerrs)
