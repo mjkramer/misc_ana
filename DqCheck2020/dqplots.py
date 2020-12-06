@@ -12,10 +12,12 @@ class DqPlotter:
         self.dets = dets_for_stage2_file(stage2_pbp_file)
 
         self.df_results = read_root(stage2_pbp_file, "results")
-        self.df_ibds = {det: read_root(stage2_pbp_file, f"ibd_AD{det}")
-                        for det in self.dets}
         self.df_run2day = pd.read_csv(drl_file, sep=r"\s+", header=None,
-                                      names=["day", "hall", "runno", "fileno"])
+                                      names=["day", "hall", "runNo", "fileNo"],
+                                      index_col=['runNo', 'fileNo'])
+        self.df_ibds = {det: read_root(stage2_pbp_file, f"ibd_AD{det}")
+                        .join(self.df_run2day, on=['runNo', 'fileNo'])
+                        for det in self.dets}
 
         self.livetimes = self.df_results.query(f"detector == {self.dets[0]}")[
             "livetime_s"].values / (24*3600)
@@ -67,3 +69,30 @@ class DqPlotter:
         yss = self.results_vals("accDaily")
         yerrs = self.results_vals("accDailyErr")
         return self.do_plot(yss, "Accidentals per day", yerrs=yerrs)
+
+    def rate_with_error(self, rate_col, count_col):
+        rates = self.results_vals(rate_col)
+        counts = self.results_vals(count_col)
+        eff_veto = self.results_vals("vetoEff")
+        eff_mult = self.results_vals("dmcEff")
+        errs = [np.sqrt(counts[i]) /
+                (self.livetimes * 3600*24 * eff_veto[i] * eff_mult[i])
+                for i in range(len(counts))]
+        return rates, errs
+
+    def plot_preMuon_rate(self):
+        yss, yerrs = self.rate_with_error("preMuonHz", "nPreMuons")
+        return self.do_plot(yss, "Pre-muon rate [Hz]", yerrs=yerrs)
+
+    def plot_promptLike_rate(self):
+        yss, yerrs = self.rate_with_error("promptLikeHz", "nPromptLikeSingles")
+        return self.do_plot(yss, "Prompt-like rate [Hz]", yerrs=yerrs)
+
+    def plot_delayedLike_rate(self):
+        yss, yerrs = self.rate_with_error("delayedLikeHz",
+                                          "nDelayedLikeSingles")
+        return self.do_plot(yss, "Delayed-like rate [Hz]", yerrs=yerrs)
+
+    def plot_plusLike_rate(self):
+        yss, yerrs = self.rate_with_error("plusLikeHz", "nPlusLikeSingles")
+        return self.do_plot(yss, "Plus-like rate [Hz]", yerrs=yerrs)

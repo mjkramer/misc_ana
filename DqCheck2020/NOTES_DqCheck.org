@@ -11,7 +11,7 @@
 ** promptLikeHz
 ** delayedLikeHz
 ** IBD rate
+** Dt
 ** Daily IBD energy
 ** Tl208 energy
 ** K40 energy
-** Dt
