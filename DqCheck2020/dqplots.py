@@ -12,8 +12,9 @@ class DqPlotter:
         self.hall = int(stage2_pbp_file.split(".")[-3][2])
         self.dets = dets_for_stage2_file(stage2_pbp_file)
 
+        # NB: non-unique index
         self.df_results = read_root(stage2_pbp_file, "results") \
-            .rename(columns={"seq": "day"})
+            .rename(columns={"seq": "day"}).set_index("day")
 
         self.df_run2day = pd.read_csv(drl_file, sep=r"\s+", header=None,
                                       names=["day", "hall", "runNo", "fileNo"],
@@ -22,11 +23,8 @@ class DqPlotter:
                         .join(self.df_run2day, on=['runNo', 'fileNo'])
                         for det in self.dets}
 
-        self.livetimes = self.df_results.query(f"detector == {self.dets[0]}")[
-            "livetime_s"].sort_index().values / (24*3600)
-
-        assert self.df_results["day"].is_monotonic
-        self.days = self.df_results["day"].unique()
+        self.livetimes = self.df_results["livetime_s"] \
+            .drop_duplicates() / (24*3600)
 
         self.df_peaks = {}
         for peak in ["k40", "tl208"]:
@@ -49,13 +47,15 @@ class DqPlotter:
 
         for i, det in enumerate(self.dets):
             yerr = yerrs[i] if yerrs else None
-            axes[0].errorbar(self.days, yss[i], yerr=yerr, fmt="o",
+            if yerr is not None:
+                assert (yerr.index == yss[i].index).all()
+            axes[0].errorbar(yss[i].index, yss[i], yerr=yerr, fmt="o",
                              ms=markersize, label=f"AD{det}")
 
         axes[0].set_title(f"{title} (EH{self.hall})")
         axes[0].legend()
 
-        axes[1].plot(self.days, self.livetimes, "ko", ms=markersize)
+        axes[1].plot(self.livetimes.index, self.livetimes, "ko", ms=markersize)
         axes[1].set_xlabel("Days since 2011 Dec 24")
         axes[1].set_ylabel("Livetime[d]")
 
@@ -66,11 +66,10 @@ class DqPlotter:
 
     def results_vals(self, column):
         return [self.df_results.query(f"detector == {det}")[column]
-                .sort_index().values
                 for det in self.dets]
 
     def fudged_errors(self, yss, frac_err):
-        return [frac_err * ys / np.sqrt(self.livetimes)
+        return [(frac_err * ys / np.sqrt(self.livetimes)).dropna()
                 for ys in yss]
 
     def plot_veto_eff(self):
@@ -95,8 +94,9 @@ class DqPlotter:
         counts = self.results_vals(count_col)
         eff_veto = self.results_vals("vetoEff")
         eff_mult = self.results_vals("dmcEff")
-        errs = [np.sqrt(counts[i]) /
-                (self.livetimes * 3600*24 * eff_veto[i] * eff_mult[i])
+        errs = [(np.sqrt(counts[i]) /
+                 (self.livetimes * 3600*24 * eff_veto[i] * eff_mult[i])
+                 ).dropna()
                 for i in range(len(counts))]
         return rates, errs
 
@@ -127,18 +127,16 @@ class DqPlotter:
             gb = df.groupby("day")
             means = gb.mean()
             uncs = gb.std() / np.sqrt(gb.count())
-            yss.append(means[column].sort_index().values)
-            yerrs.append(uncs[column].sort_index().values)
+            yss.append(means[column])
+            yerrs.append(uncs[column])
         return yss, yerrs
 
     def ibd_rate(self):
         yss, yerrs = [], []
         for df in self.df_ibds.values():
-            counts = df.groupby("day").count()["eP"]  # eP or any col
-            times = self.df_results.set_index("day")["livetime_s"] \
-                                   .drop_duplicates() / (3600*24)
-            yss.append((counts / times).sort_index().values)
-            yerrs.append((np.sqrt(counts) / times).sort_index().values)
+            counts = df.groupby("day").count().iloc[:, 0]
+            yss.append((counts / self.livetimes).dropna())
+            yerrs.append((np.sqrt(counts) / self.livetimes).dropna())
         return yss, yerrs
 
     def plot_ibd_dt(self):
@@ -151,7 +149,7 @@ class DqPlotter:
                             yerrs=yerrs)
 
     def plot_ibd_eDelayed(self):
-        yss, yerrs = self.ibd_vals("eP")
+        yss, yerrs = self.ibd_vals("eD")
         return self.do_plot(yss, "IBD mean delayed energy", "eDelayed",
                             yerrs=yerrs)
 
@@ -162,10 +160,8 @@ class DqPlotter:
 
     def peak_fits(self, peakname):
         df = self.df_peaks[peakname]
-        yss = [df[f"valAD{det}"].sort_index().values
-               for det in self.dets]
-        yerrs = [df[f"errAD{det}"].sort_index().values
-                 for det in self.dets]
+        yss = [df[f"valAD{det}"] for det in self.dets]
+        yerrs = [df[f"errAD{det}"] for det in self.dets]
         return yss, yerrs
 
     def plot_k40(self):
