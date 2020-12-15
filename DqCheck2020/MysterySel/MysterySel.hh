@@ -2,7 +2,8 @@
 
 #include "SelectorBase.hh"
 
-class TH1F;
+class TH2F;
+class TH3F;
 
 // -----------------------------------------------------------------------------
 
@@ -16,6 +17,9 @@ public:
   void select(Iter it) override;
   void finalize(Pipeline& p) override;
 
-  TH1F* hist;
+  TH2F* h2_rz;
+  TH2F* h2_r2z;
+  TH2F* h2_xy;
+  TH3F* h3_xyz;
 };
 

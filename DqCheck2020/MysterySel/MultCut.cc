@@ -9,8 +9,8 @@ void MultCutTool::connect(Pipeline& pipeline)
   auto config = pipeline.getTool<Config>();
   initCuts(config);
 
-  muonAlgIBDs = pipeline.getAlg<MuonAlg>(MuonAlg::Purpose::ForIBDs);
-  ASSERT(muonAlgIBDs->rawTag() == int(MuonAlg::Purpose::ForIBDs));
+  // muonAlgIBDs = pipeline.getAlg<MuonAlg>(MuonAlg::Purpose::ForIBDs);
+  // ASSERT(muonAlgIBDs->rawTag() == int(MuonAlg::Purpose::ForIBDs));
   muonAlgSingles = pipeline.getAlg<MuonAlg>(MuonAlg::Purpose::ForSingles);
   ASSERT(muonAlgSingles->rawTag() == int(MuonAlg::Purpose::ForSingles));
 }
