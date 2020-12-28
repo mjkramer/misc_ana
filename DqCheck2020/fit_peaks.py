@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.7
 
+import argparse
 from collections import defaultdict
 from glob import glob
 import os
@@ -20,7 +21,9 @@ def singles_fit(h, emin, emax):
 
 
 class PeakFitter:
-    def __init__(self, stage2_dbd_dir=DEFAULT_STAGE2_DIR):
+    def __init__(self, tag, stage2_dbd_dir=DEFAULT_STAGE2_DIR):
+        self.tag = tag
+
         # hall => day => det => h_singles
         self.hists = defaultdict(lambda: defaultdict(lambda: {}))
 
@@ -34,10 +37,11 @@ class PeakFitter:
                         self.hists[hall][day][det] = keep(h)
 
     def dump_fit(self, name, emin, emax):
-        os.system("mkdir -p data/fits")
+        fitdir = f"data/fits.{self.tag}"
+        os.system(f"mkdir -p {fitdir}")
         for hall in [1, 2, 3]:
-            with open(f"data/fits/{name}.eh{hall}.csv", "w") as outf:
-                with open(f"data/fits/{name}_err.eh{hall}.csv", "w") as outf_err:
+            with open(f"{fitdir}/{name}.eh{hall}.csv", "w") as outf:
+                with open(f"{fitdir}/{name}_err.eh{hall}.csv", "w") as outf_err:
                     for day in sorted(self.hists[hall]):
                         vals, vals_err = [], []
                         dets = [1, 2, 3, 4] if hall == 3 else [1, 2]
@@ -57,7 +61,12 @@ class PeakFitter:
 
 
 def main():
-    pf = PeakFitter()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("tag")
+    ap.add_argument("stage2_dir")
+    args = ap.parse_args()
+
+    pf = PeakFitter(args.tag, stage2_dbd_dir=args.stage2_dir)
     pf.dump_fit("k40", 1.4, 1.5)
     pf.dump_fit("tl208", 2.6, 2.8)
 
