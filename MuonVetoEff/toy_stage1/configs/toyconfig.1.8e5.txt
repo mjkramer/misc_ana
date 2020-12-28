@@ -1,0 +1,7 @@
+wpRate = 186.8
+adRate = 20.49
+shRate = 0.8965
+
+plsRate = 60
+dlsRate = 0.009
+ibdRate = 0.007

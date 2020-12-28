@@ -1,0 +1,6 @@
+config.*.txt
+gmon.out
+gprof*.txt
+log_muveto*.txt
+log_stage2*.txt
+out_toy*.root
