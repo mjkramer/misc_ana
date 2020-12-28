@@ -12,8 +12,22 @@ T13_ROWS = {
     "livetime": 2,
     "veto_eff": 3,
     "mult_eff": 4,
+    "delcut_eff": 5,
+    "power_unc": 6,
+    "tot_eff_unc": 7,
+    "target_mass": 8,
     "tot_bkg": 9,
+    "tot_bkg_unc": 10,
+    "acc_bkg": 11,
+    "acc_bkg_unc": 12,
     "li9_bkg": 13,
+    "li9_bkg_unc": 14,
+    "fastn_bkg": 15,
+    "fastn_bkg_unc": 16,
+    "amc_bkg": 17,
+    "amc_bkg_unc": 18,
+    "alphan_bkg": 19,
+    "alphan_bkg_unc": 20
 }
 
 
