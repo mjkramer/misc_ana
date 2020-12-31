@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# NOTE: This has been superseded by IbdSel/fit_prep/get_ncap_spec.py
+
 import os
 import sys
 
