@@ -23,8 +23,9 @@ class DqPlotter:
                         .join(self.df_run2day, on=['runNo', 'fileNo'])
                         for det in self.dets}
 
-        self.livetimes = self.df_results["livetime_s"] \
-            .drop_duplicates() / (24*3600)
+        # Keep only the first row for a given index (day)
+        dupmask = self.df_results.index.duplicated(keep="first")
+        self.livetimes = self.df_results[~dupmask]["livetime_s"] / (24*3600)
 
         self.df_peaks = {}
         for peak in ["k40", "tl208"]:
