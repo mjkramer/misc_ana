@@ -125,7 +125,8 @@ def read_csv(csvfile):
     return pd.read_csv(csvfile, index_col=0)
 
 
-def plot_fit(df, qty="s2t", best_or_mid="best"):
+def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
+             best_or_mid="best"):
     xs = df["cut_mev"]
     ymin = df[f"{qty}_min1sigma"]
     ymax = df[f"{qty}_max1sigma"]
@@ -138,10 +139,28 @@ def plot_fit(df, qty="s2t", best_or_mid="best"):
     yerrlow = ys - ymin
     yerrhigh = ymax - ys
 
+    plt.figure()
     ret = plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o")
 
-    plt.title(qty)
+    plt.title(title)
     plt.xlabel("Delayed low cut [MeV]")
     plt.tight_layout()
 
     return ret
+
+
+def plot_fit_all():
+    os.system("mkdir -p gfx/fit_results")
+    df = read_csv("summaries/delcut_first.csv")
+
+    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
+    plt.savefig("gfx/fit_results/s2t_best.pdf")
+
+    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
+    plt.savefig("gfx/fit_results/s2t_mid.pdf")
+
+    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
+    plt.savefig("gfx/fit_results/dm2_best.pdf")
+
+    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
+    plt.savefig("gfx/fit_results/dm2_mid.pdf")
