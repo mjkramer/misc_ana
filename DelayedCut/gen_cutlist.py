@@ -13,7 +13,7 @@ def main():
     args = ap.parse_args()
 
     for mev in np.linspace(args.min_mev, args.max_mev, args.n_mev):
-        print(f"{mev}")
+        print(f"{mev:.3f}")
 
 
 if __name__ == '__main__':

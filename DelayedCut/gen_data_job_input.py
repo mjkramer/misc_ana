@@ -19,7 +19,7 @@ def main():
             continue
         cut_mev = float(parts[-1][:-3])
 
-        print(f"{direc} {cut_mev}")
+        print(f"{direc} {cut_mev:.3f}")
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -A dune -C haswell -N 1 -n 2 -t 02:00:00 -q regular -L project,projecta,SCRATCH
+#SBATCH -A dayabay -C haswell -N 1 -n 2 -t 02:00:00 -q regular -L project,projecta,SCRATCH
 
 source ~/mywork/ThesisAnalysis/IbdSel/code/ibd_prod/bash/job_env.inc.sh
 

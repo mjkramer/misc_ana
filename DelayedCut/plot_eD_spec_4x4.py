@@ -3,17 +3,10 @@
 import os
 
 import ROOT as R
+
+from util import keep
+
 R.gROOT.SetBatch(True)
-
-
-def keep(o):
-    R.SetOwnership(o, False)     # don't delete it, python!
-    try:
-        o.SetDirectory(R.gROOT)  # don't delete it, root!
-        # o.SetDirectory(0)
-    except Exception:
-        pass                     # unless you weren't going to anyway
-    return o
 
 
 def draw_4x4(tfile, nADs, listADs, tag):

@@ -6,6 +6,17 @@ import ROOT as R
 
 from plot_fit_results import read_study
 
+
+def keep(o):
+    R.SetOwnership(o, False)     # don't delete it, python!
+    try:
+        o.SetDirectory(R.gROOT)  # don't delete it, root!
+        # o.SetDirectory(0)
+    except Exception:
+        pass                     # unless you weren't going to anyway
+    return o
+
+
 def dump_fit_results(study):
     df = read_study(study)
     df.to_csv(f"summaries/{study}.csv")

@@ -22,7 +22,7 @@ def main():
         config["ibdDelayedEmin"] = cut_mev
         config["ibdDmcEminAfter"] = cut_mev
         tag = os.path.basename(args.outdir)
-        outfile = f"config.{tag}_{cut_mev:.2f}MeV.txt"
+        outfile = f"config.{tag}_{cut_mev:.3f}MeV.txt"
         config.write(f"{args.outdir}/{outfile}")
 
 

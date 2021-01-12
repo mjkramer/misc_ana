@@ -150,17 +150,17 @@ def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
 
 
 def plot_fit_all():
-    os.system("mkdir -p gfx/fit_results")
-    df = read_csv("summaries/delcut_first.csv")
+    os.system("mkdir -p gfx/fit_results.firstPlusFine")
+    df = read_csv("summaries/delcut_firstPlusFine.csv")
 
     plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
-    plt.savefig("gfx/fit_results/s2t_best.pdf")
+    plt.savefig("gfx/fit_results.firstPlusFine/s2t_best.pdf")
 
     plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
-    plt.savefig("gfx/fit_results/s2t_mid.pdf")
+    plt.savefig("gfx/fit_results.firstPlusFine/s2t_mid.pdf")
 
     plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
-    plt.savefig("gfx/fit_results/dm2_best.pdf")
+    plt.savefig("gfx/fit_results.firstPlusFine/dm2_best.pdf")
 
     plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
-    plt.savefig("gfx/fit_results/dm2_mid.pdf")
+    plt.savefig("gfx/fit_results.firstPlusFine/dm2_mid.pdf")
