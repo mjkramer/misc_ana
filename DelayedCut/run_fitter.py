@@ -4,6 +4,8 @@ import argparse
 import os
 import sys
 
+from fudge_acc import fudge_acc
+
 
 def read_data_file(path):       # toy MC datafile
     result = {}
@@ -26,7 +28,7 @@ def dump_data_file(path, data):
 
 def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
                s2t13=None, dm2=None, bcw_bins=False, use_data=False, period=-1,
-               copy_from=None):
+               copy_from=None, acc_fudge_pct=None):
     C = os.system
 
     fit_home = os.getenv("LBNL_FIT_HOME")
@@ -55,6 +57,8 @@ def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
                 C(f"./gen_text_for_toy.py {template} {outfile} {nADs} {cut_mev}")
             else:
                 C(f"cp {template} {outfile}")
+                if acc_fudge_pct:
+                    fudge_acc(outfile, nADs, acc_fudge_pct)
             C(f"cp {template_dir}/accidental_eprompt_shapes_{nADs}ad.root {outdir}")
 
         C(f"mkdir -p {confdir}")
@@ -93,6 +97,7 @@ def main():
     ap.add_argument("--use-data", action="store_true")
     ap.add_argument("--period", type=int, default=-1)
     ap.add_argument("--copy-from")
+    ap.add_argument("--acc-fudge-pct", type=float)
     args = ap.parse_args()
 
     run_fitter(**vars(args))
