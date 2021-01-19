@@ -22,7 +22,7 @@ def theta13_to_df(t13_file):
 def dataframes():
     "Returns {4.0: {6: df, 8: df, 7: df}, ...}"
     result = {}
-    basedir = "fit_results/delcut_first"
+    basedir = "fit_results/delcut_firstPlusFine"
     for direc in sorted(glob(f"{basedir}/*MeV")):
         mev = float(os.path.basename(direc)[:-3])
         result[mev] = {}
@@ -70,7 +70,7 @@ def detno2sitedet(detno):
     return site, det
 
 
-def plot_scale_factor(dets):
+def get_scale_factor(dets):
     dfs = dataframes()
     xs, ys = [], []
     home = os.getenv("IBDSEL_HOME")
@@ -97,5 +97,18 @@ def plot_scale_factor(dets):
         xs.append(mev)
         ys.append(y)
 
-    plt.plot(xs, ys, 'o')
-    return xs, ys
+    return np.array(xs), np.array(ys)
+
+
+def plot_scale_factor(dets):
+    xs, ys = get_scale_factor(dets)
+    return plt.plot(xs, ys, 'o')
+
+
+def plot_scale_factor_nearfar():
+    xs, ys_near = get_scale_factor([1, 2, 3, 4])
+    _, ys_far = get_scale_factor([5, 6, 7, 8])
+    plt.plot(xs, ys_far / ys_near, "o")
+    plt.title("Delayed cut eff (rel to 6 MeV), far/near ratio")
+    plt.xlabel("Delayed cut [MeV]")
+    plt.savefig("gfx/nearfar.png")

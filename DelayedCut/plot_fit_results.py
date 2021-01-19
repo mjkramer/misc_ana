@@ -139,7 +139,7 @@ def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
     yerrlow = ys - ymin
     yerrhigh = ymax - ys
 
-    plt.figure()
+    # plt.figure()
     ret = plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o")
 
     plt.title(title)
@@ -149,18 +149,38 @@ def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
     return ret
 
 
-def plot_fit_all():
-    os.system("mkdir -p gfx/fit_results.firstPlusFine")
-    df = read_csv("summaries/delcut_firstPlusFine.csv")
-
+def plot_s2t_best(df):
     plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
-    plt.savefig("gfx/fit_results.firstPlusFine/s2t_best.pdf")
 
+
+def plot_s2t_mid(df):
     plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
-    plt.savefig("gfx/fit_results.firstPlusFine/s2t_mid.pdf")
 
+
+def plot_dm2_best(df):
     plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
-    plt.savefig("gfx/fit_results.firstPlusFine/dm2_best.pdf")
 
+
+def plot_dm2_mid(df):
     plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
-    plt.savefig("gfx/fit_results.firstPlusFine/dm2_mid.pdf")
+
+
+def plot_fit_all(study="delcut_firstPlusFine"):
+    os.system(f"mkdir -p gfx/fit_results/{study}")
+    df = read_csv(f"summaries/{study}.csv")
+
+    plt.figure()
+    plot_s2t_best(df)
+    plt.savefig(f"gfx/fit_results/{study}/s2t_best.pdf")
+
+    plt.figure()
+    plot_s2t_mid(df)
+    plt.savefig(f"gfx/fit_results/{study}/s2t_mid.pdf")
+
+    plt.figure()
+    plot_dm2_best(df)
+    plt.savefig(f"gfx/fit_results/{study}/dm2_best.pdf")
+
+    plt.figure()
+    plot_dm2_mid(df)
+    plt.savefig(f"gfx/fit_results/{study}/dm2_mid.pdf")

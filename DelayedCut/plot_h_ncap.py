@@ -110,6 +110,38 @@ def plot_h_ncap_all():
                 c.SaveAs(f"{gfxdir_log}/ncap_log_{desc}.png")
 
 
+def overlay_h_ncap():
+    R.gStyle.SetOptStat(0)
+
+    colors = [R.kRed, R.kBlue, R.kMagenta, R.kGreen,
+              R.kOrange, R.kBlack, R.kYellow, R.kPink]
+    hists = [None] * 8
+
+    for nADs in [6, 8, 7]:
+        for site in [1, 2, 3]:
+            for det in dets_for(site):
+                if not det_active(nADs, site, det):
+                    continue
+                _h_ncap, _h_sing, h_ncap_sub = get_h_ncap(nADs, site, det)
+                idt = idet(site, det)
+                if hists[idt] is None:
+                    hists[idt] = keep(h_ncap_sub.Clone(f"h_AD{det}"))
+                    print(hists[idt])
+                else:
+                    hists[idt].Add(h_ncap_sub)
+
+    for i, h in enumerate(hists):
+        h.SetLineColor(colors[i])
+        h.Scale(1/h.Integral())
+        opt = " same" if i != 0 else ""
+        h.Draw("hist" + opt)
+
+    R.gPad.BuildLegend()
+    R.gPad.SetLogy()
+    R.gPad.SaveAs("gfx/overlay_h_ncap.png")
+
+
+
 if __name__ == '__main__':
     R.gROOT.SetBatch(True)
     plot_h_ncap_all()
