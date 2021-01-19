@@ -4,7 +4,7 @@ import argparse
 
 import ROOT as R
 
-from genText4Veto import dets_for, idet
+from gen_text_for_toy import dets_for, idet
 
 
 def main():

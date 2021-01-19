@@ -54,7 +54,7 @@ def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
             template = f"{template_dir}/{theta13file}"
             outfile = f"{outdir}/{theta13file}"
             if (not use_data) and cut_mev:
-                C(f"./gen_text_for_toy.py {template} {outfile} {nADs} {cut_mev}")
+                C(f"./gen_text_for_toy.py {template} {outfile} {nADs} --delayed-min {cut_mev}")
             else:
                 C(f"cp {template} {outfile}")
                 if acc_fudge_pct:
