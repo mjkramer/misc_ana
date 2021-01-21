@@ -20,7 +20,7 @@ for lib in ["common.so", "stage2.so"]:
 sys.path += [os.getenv("IBDSEL_HOME") + "/fit_prep"]
 from delayed_eff import DelayedEffCalc
 
-from util import read_ibdsel_config
+from util import keep, read_ibdsel_config
 
 
 def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
@@ -31,16 +31,15 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
     df = read_root(stage2_file, "results")
     df = df.query(f"detector == {det}")
 
-    try:
-        hSing = f[f"h_single_AD{det}"]
-    except Exception:
+    hSing = keep(f.Get(f"h_single_AD{det}"))
+    if not hSing:
         return None
 
     livetime_s = sum(df["livetime_s"])
     eMuIbd = sum(df["vetoEff"] * df["livetime_s"]) / livetime_s
     eMuSingles = sum(df["vetoEffSingles"] * df["livetime_s"]) / livetime_s
 
-    singleMultCuts = R.MultCutTools.Cuts()
+    singleMultCuts = R.MultCutTool.Cuts()
     singleMultCuts.usec_before = config["singleDmcUsecBefore"]
     singleMultCuts.emin_before = config["singleDmcEminBefore"]
     singleMultCuts.emax_before = config["singleDmcEmaxBefore"]
@@ -48,7 +47,7 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
     singleMultCuts.emin_after = config["singleDmcEminAfter"]
     singleMultCuts.emax_after = config["singleDmcEmaxAfter"]
 
-    ibdMultCuts = R.MultCutTools.Cuts()
+    ibdMultCuts = R.MultCutTool.Cuts()
     ibdMultCuts.usec_before = config["ibdDmcUsecBefore"]
     ibdMultCuts.emin_before = config["ibdDmcEminBefore"]
     ibdMultCuts.emax_before = config["ibdDmcEmaxBefore"]
@@ -124,9 +123,11 @@ def main():
                                    args.delayed_min, args.delayed_max)
                  for site in [1, 2, 3] for det in dets_for(site)]
 
+    print(singcalcs)
+
     phase = {6: 1, 8: 2, 7: 3}[args.nADs]
     effcalc = DelayedEffCalc(nominal_ibdsel_config_file)
-    effcalc.cut = args.delayed_emin
+    effcalc.cut = args.delayed_min
     scale_factors = [1] * 8
     for site in [1, 2, 3]:
         for det in dets_for(site):
@@ -194,7 +195,7 @@ def main():
 
     def acc_err(site, det):
         i = idet(site, det)
-        return singcalcs[i].accDailyErr()
+        return singcalcs[i].accDailyErr(site)
     acc_errs = new_vals(acc_err)
 
     def li9_rate(site, _det):
