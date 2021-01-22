@@ -2,6 +2,33 @@
 
 #include "external/FukushimaLambertW.hh"
 
+#include <TH1F.h>
+
+#include <cassert>
+
+static double fine_integral(TH1F* h, double x1, double x2)
+{
+  const int bin1 = h->FindBin(x1);
+  const double frac1 =
+    1 - ((x1 - h->GetBinLowEdge(bin1)) / h->GetBinWidth(bin1));
+
+  const int bin2 = h->FindBin(x2);
+  const double frac2 =
+    bin2 == bin1
+    ? -(1 - (x2 - h->GetBinLowEdge(bin2)) / h->GetBinWidth(bin2))
+    : (x2 - h->GetBinLowEdge(bin2)) / h->GetBinWidth(bin2);
+
+  const double middle_integral =
+    bin2 - bin1 < 2
+    ? 0
+    : h->Integral(bin1 + 1, bin2 - 1);
+
+  return
+    frac1 * h->GetBinContent(bin1) +
+    middle_integral +
+    frac2 * h->GetBinContent(bin2);
+}
+
 AccUncMC::AccUncMC(const Params& pars, const State& nominalState) :
   pars_(pars), nominalState_(nominalState), state_(nominalState)
 {}
@@ -70,4 +97,18 @@ double AccUncMC::accDaily() const
     exp(-rPlus * voidBeforePromptWin_s);
   const double probZeroDelayedInVoidAfterDelayed =
     exp(-rDelayed * voidAfterDelayed_s);
+
+  const double R = rDelayed * probOnePromptInPromptWin *
+    probZeroPreMuonInPromptWin * probZeroPlusInVoidBeforePromptWin *
+    probZeroDelayedInVoidAfterDelayed;
+
+  // This R assumes veto eff. of 1 (i.e. unreduced by it) while R IS
+  // reduced by DMC eff by construction (i.e. we are predicting what we'd see
+  // in the RAW spectrum, modulo veto eff.). In the fitter, we multiply every
+  // bkg rate by the veto and DMC efficiencies (*for IBDs*), prior to
+  // subtracting from the raw IBD spectrum(?). Therefore, here we must divide by
+  // the DMC efficiency for IBDs, to pre-cancel-out this multiplication.
+
+  const double hzToDaily = 86'400;
+  return hzToDaily * R / dmcEff();
 }
