@@ -5,6 +5,8 @@
 #include <TH1F.h>
 
 #include <cassert>
+#include <numeric>
+#include <vector>
 
 static double fine_integral(const TH1F& h_, double x1, double x2)
 {
@@ -29,6 +31,16 @@ static double fine_integral(const TH1F& h_, double x1, double x2)
     frac1 * h.GetBinContent(bin1) +
     middle_integral +
     frac2 * h.GetBinContent(bin2);
+}
+
+static double stddev(const std::vector<double>& v)
+{
+  const double mean = std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+  const double sq_sum = std::inner_product(v.begin(), v.end(), v.begin(), 0.0,
+      [](double acc, double val) { return acc + val; },
+      [mean](double x, double y) {
+        return (x - mean) * (y - mean); });
+  return std::sqrt(sq_sum / v.size());
 }
 
 AccUncMC::AccUncMC(const Params& pars, const TH1F& hSingMeas) :
@@ -121,4 +133,12 @@ double AccUncMC::randAccDaily()
 {
   fluctuate();
   return accDaily();
+}
+
+double AccUncMC::accDailyUnc(size_t samples)
+{
+  std::vector<double> vals(samples);
+  std::generate(vals.begin(), vals.end(),
+                [this]() { return randAccDaily(); });
+  return stddev(vals);
 }

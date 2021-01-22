@@ -19,6 +19,7 @@ public:
   AccUncMC(const Params& pars, const TH1F& hSingMeas);
   double accDaily() const;
   double randAccDaily();
+  double accDailyUnc(size_t samples=10000);
 
 private:
   static constexpr double DT_MAX_US = 200;
