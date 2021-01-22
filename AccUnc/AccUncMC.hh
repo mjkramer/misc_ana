@@ -1,3 +1,6 @@
+#pragma once
+
+#include <TH1F.h>
 #include <TRandom3.h>
 
 class AccUncMC {
@@ -5,17 +8,15 @@ public:
   struct Params {
     double promptMin, promptMax;
     double delayedMin, delayedMax;
-    double vetoEff;
+    double isolEminBefore, isolEmaxBefore;
+    double isolEminAfter, isolEmaxAfter;
+    double dmcEminBefore, dmcEmaxBefore;
+    double dmcEminAfter, dmcEmaxAfter;
+    double vetoEffSingles;
     double livetime_s;
   };
 
-  struct State {
-    double nPromptLike;
-    double nDelayedLike;
-    double nPreMuon;
-  };
-
-  AccUncMC(const Params& pars, const State& nominalState);
+  AccUncMC(const Params& pars, const TH1F& hSingMeas);
   double accDaily() const;
   double randAccDaily();
 
@@ -24,11 +25,15 @@ private:
   static constexpr double PRE_WINDOW_US = 400;
   static constexpr double POST_WINDOW_US = 200;
 
-  void newState();
+  void fluctuate();
+  double singlesCount(double emin, double emax) const;
+  double isolEff() const;
+  double calcHz(double emin, double emax) const;
+  double dmcEff() const;
 
   const Params pars_;
-  const State nominalState_;
-  State state_;
+  TH1F hSingNom_;
+  TH1F hSing_;
 
   TRandom3 ran_;
 };

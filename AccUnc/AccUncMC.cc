@@ -6,51 +6,56 @@
 
 #include <cassert>
 
-static double fine_integral(TH1F* h, double x1, double x2)
+static double fine_integral(const TH1F& h_, double x1, double x2)
 {
-  const int bin1 = h->FindBin(x1);
-  const double frac1 =
-    1 - ((x1 - h->GetBinLowEdge(bin1)) / h->GetBinWidth(bin1));
+  TH1F& h = const_cast<TH1F&>(h_);
 
-  const int bin2 = h->FindBin(x2);
+  const int bin1 = h.FindBin(x1);
+  const double frac1 =
+    1 - ((x1 - h.GetBinLowEdge(bin1)) / h.GetBinWidth(bin1));
+
+  const int bin2 = h.FindBin(x2);
   const double frac2 =
     bin2 == bin1
-    ? -(1 - (x2 - h->GetBinLowEdge(bin2)) / h->GetBinWidth(bin2))
-    : (x2 - h->GetBinLowEdge(bin2)) / h->GetBinWidth(bin2);
+    ? -(1 - (x2 - h.GetBinLowEdge(bin2)) / h.GetBinWidth(bin2))
+    : (x2 - h.GetBinLowEdge(bin2)) / h.GetBinWidth(bin2);
 
   const double middle_integral =
     bin2 - bin1 < 2
     ? 0
-    : h->Integral(bin1 + 1, bin2 - 1);
+    : h.Integral(bin1 + 1, bin2 - 1);
 
   return
-    frac1 * h->GetBinContent(bin1) +
+    frac1 * h.GetBinContent(bin1) +
     middle_integral +
-    frac2 * h->GetBinContent(bin2);
+    frac2 * h.GetBinContent(bin2);
 }
 
-AccUncMC::AccUncMC(const Params& pars, const State& nominalState) :
-  pars_(pars), nominalState_(nominalState), state_(nominalState)
+AccUncMC::AccUncMC(const Params& pars, const TH1F& hSingMeas) :
+  pars_(pars), hSingNom_(hSingMeas), hSing_(hSingMeas)
 {}
 
-void AccUncMC::newState()
+void AccUncMC::fluctuate()
 {
-  auto gen = [this](double n) { return ran_.PoissonD(n); };
+  for (int bin = 1; bin <= hSingNom_.GetNbinsX(); ++bin) {
+    const double nomVal = hSingNom_.GetBinContent(bin);
+    const double randVal = ran_.PoissonD(nomVal);
+    hSing_.SetBinContent(bin, randVal);
+  }
+}
 
-  state_.nPreMuon = gen(nominalState_.nPreMuon);
-  state_.nDelayedLike = gen(nominalState_.nDelayedLike);
-
-  const double n0to6 = gen(nominalState_.nPromptLike - nominalState_.nDelayedLike);
-  state_.nPromptLike = n0to6 + state_.nDelayedLike;
+double AccUncMC::singlesCount(double emin, double emax) const
+{
+  return fine_integral(hSing_, emin, emax);
 }
 
 double AccUncMC::isolEff() const
 {
-  const double nBefore = state_.nPromptLike + state_.nPreMuon;
-  const double nAfter = state_.nDelayedLike;
+  const double nBefore = singlesCount(pars_.isolEminBefore, pars_.isolEmaxBefore);
+  const double nAfter = singlesCount(pars_.isolEminAfter, pars_.isolEmaxAfter);
   const double tBefore_s = 1e-6 * PRE_WINDOW_US;
   const double tAfter_s = 1e-6 * POST_WINDOW_US;
-  const double denom = pars_.vetoEff * pars_.livetime_s;
+  const double denom = pars_.vetoEffSingles * pars_.livetime_s;
 
   const double arg =
     ((nBefore * tBefore_s) + (nAfter * tAfter_s)) / denom;
@@ -58,31 +63,30 @@ double AccUncMC::isolEff() const
   return exp(Fukushima::LambertW0(-arg));
 }
 
-double AccUncMC::calcHz(double n) const
+double AccUncMC::calcHz(double emin, double emax) const
 {
-  return n / (isolEff() * pars_.vetoEff * pars_.livetime_s);
+  const double n = singlesCount(emin, emax);
+  return n / (isolEff() * pars_.vetoEffSingles * pars_.livetime_s);
 }
 
 double AccUncMC::dmcEff() const
 {
   // XXX Do the DMC and isolation cuts use consistent prompt/delayed ranges? No!!!
-  const double rPrompt = calcHz(state_.nPromptLike);
-  const double rDelayed = calcHz(state_.nDelayedLike);
-  const double rPreMuon = calcHz(state_.nPreMuon);
-  const double rPlus = rPrompt + rPreMuon;
+  const double rBefore = calcHz(pars_.dmcEminBefore, pars_.dmcEmaxBefore);
+  const double rAfter = calcHz(pars_.dmcEminAfter, pars_.dmcEmaxAfter);
 
   const double tBefore_s = 1e-6 * PRE_WINDOW_US;
   const double tAfter_s = 1e-6 * POST_WINDOW_US;
 
-  const double arg = (rPlus * tBefore_s) + (rDelayed * tAfter_s);
+  const double arg = (rBefore * tBefore_s) + (rAfter * tAfter_s);
   return exp(-arg);
 }
 
 double AccUncMC::accDaily() const
 {
-  const double rPrompt = calcHz(state_.nPromptLike);
-  const double rDelayed = calcHz(state_.nDelayedLike);
-  const double rPreMuon = calcHz(state_.nPreMuon);
+  const double rPrompt = calcHz(pars_.promptMin, pars_.promptMax);
+  const double rDelayed = calcHz(pars_.delayedMin, pars_.delayedMax);
+  const double rPreMuon = calcHz(pars_.promptMax, 99999);
   const double rPlus = rPrompt + rPreMuon;
 
   const double promptWin_s = 1e-6 * DT_MAX_US;
@@ -111,4 +115,10 @@ double AccUncMC::accDaily() const
 
   const double hzToDaily = 86'400;
   return hzToDaily * R / dmcEff();
+}
+
+double AccUncMC::randAccDaily()
+{
+  fluctuate();
+  return accDaily();
 }
