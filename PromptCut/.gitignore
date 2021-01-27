@@ -1,5 +1,5 @@
-job_input/
-fit_results/
-gfx/
-summaries/
-logs/
+job_input
+fit_results
+gfx
+summaries
+logs

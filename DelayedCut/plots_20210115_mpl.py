@@ -89,7 +89,7 @@ def plot_acc_resid_farnear_ratio(study, mincut=4, maxcut=5):
     fig.tight_layout()
 
     os.system("mkdir -p gfx/acc_resid_ratio")
-    fig.savefig(f"gfx/acc_resid/acc_resid_ratio.{study}.png")
+    fig.savefig(f"gfx/acc_resid_ratio/acc_resid_ratio.{study}.png")
 
 
 
