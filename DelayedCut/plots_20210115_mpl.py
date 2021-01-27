@@ -55,6 +55,43 @@ def plot_acc_resid(study, mincut=4, maxcut=5):
     fig.savefig(f"gfx/acc_resid/acc_resid.{study}.png")
 
 
+def plot_acc_resid_farnear_ratio(study, mincut=4, maxcut=5):
+    def fit(dets):
+        xs, ys = get_col_between("acc_bkg", dets, mincut, maxcut)
+        # XXX get rid of np.flip if we upgrade numpy
+        coefs = np.flip(polynomial.polyfit(xs, ys, 6))
+        poly = np.poly1d(coefs)
+        ys_poly = poly(xs)
+        ys_resid = (ys - ys_poly) / ys_poly
+        return xs, ys, ys_poly, ys_resid
+
+    near = [1, 2, 3, 4]
+    far = [5, 6, 7, 8]
+
+    xs, ys_near, ys_poly_near, ys_resid_near = fit(near)
+    xs, ys_far, ys_poly_far, ys_resid_far = fit(far)
+
+    fig, axs = plt.subplots(figsize=[12.8, 4.8],
+                            nrows=1, ncols=2)
+
+    ax = axs[0]
+    ax.scatter(xs, ys_far / ys_near)
+    ax.axhline(1, c='g')
+    ax.set(title=f"Accidentals rate (/AD/d), far/near ratio",
+           xlabel="Delayed cut [MeV]")
+
+    ax = axs[1]
+    ax.scatter(xs, ys_resid_far / ys_resid_near)
+    ax.axhline(0, c='g')
+    ax.set(title=f"Residuals after poly-fit, far/near ratio",
+           xlabel="Delayed cut [MeV]")
+
+    fig.tight_layout()
+
+    os.system("mkdir -p gfx/acc_resid_ratio")
+    fig.savefig(f"gfx/acc_resid/acc_resid_ratio.{study}.png")
+
+
 
 def find_stage2_dir(cut):
     isfirst = np.isclose(cut % 0.1, 0.1)
