@@ -156,3 +156,25 @@ def plot_dlike(*args, **kwargs):
 def plot_plike(*args, **kwargs):
     for hall in [1, 2, 3]:
         plot_results_col("promptLikeHz", hall, *args, **kwargs)
+
+
+def plot_acc_fraction():
+    near = [1, 2, 3, 4]
+    far = [5, 6, 7, 8]
+
+    xs, obs_near = get_column("obs_evt", near, weight=False)
+    xs, obs_far = get_column("obs_evt", far, weight=False)
+    xs, lt_near = get_column("livetime", near, weight=False)
+    xs, lt_far = get_column("livetime", far, weight=False)
+    xs, acc_near = get_column("acc_bkg", near)
+    xs, acc_far = get_column("acc_bkg", far)
+
+    plt.figure()
+    plt.scatter(xs, acc_near * lt_near / obs_near)
+    plt.title("Accidentals/TotalCandidates (near)")
+    plt.tight_layout()
+
+    plt.figure()
+    plt.scatter(xs, acc_far * lt_far / obs_far)
+    plt.title("Accidentals/TotalCandidates (far)")
+    plt.tight_layout()
