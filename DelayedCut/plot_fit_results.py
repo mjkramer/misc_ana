@@ -184,3 +184,35 @@ def plot_fit_all(study="delcut_firstPlusFine"):
     plt.figure()
     plot_dm2_mid(df)
     plt.savefig(f"gfx/fit_results/{study}/dm2_mid.pdf")
+
+
+def plot_fit_unc(df, qty, title):
+    xs = df["cut_mev"]
+    ymin = df[f"{qty}_min1sigma"]
+    ymax = df[f"{qty}_max1sigma"]
+
+    fig, ax = plt.subplots()
+    ax.scatter(xs, (ymax - ymin)/2)
+    ax.set(xlabel="Delayed low cut [MeV]", title=title)
+    fig.tight_layout()
+
+    return fig, ax
+
+
+def plot_s2t_unc(df):
+    return plot_fit_unc(df, "s2t", r"$\sin^2 \theta_{13}$ uncertainty")
+
+
+def plot_dm2_unc(df):
+    return plot_fit_unc(df, "dm2", r"$\Delta m^2_{ee}$ uncertainty")
+
+
+def plot_fit_unc_all(study):
+    os.system(f"mkdir -p gfx/fit_unc/{study}")
+    df = read_csv(f"summaries/{study}.csv")
+
+    fig, ax = plot_s2t_unc(df)
+    fig.savefig(f"gfx/fit_unc/{study}/unc_s2t.pdf")
+
+    fig, ax = plot_dm2_unc(df)
+    fig.savefig(f"gfx/fit_unc/{study}/unc_dm2.pdf")
