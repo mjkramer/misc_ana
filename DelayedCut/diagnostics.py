@@ -4,8 +4,9 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
+import uproot
 
 sys.path += [os.getenv("IBDSEL_HOME") + "/fit_prep"]
 from delayed_eff import DelayedEffCalc
@@ -19,10 +20,10 @@ def theta13_to_df(t13_file):
 
 
 @lru_cache()
-def dataframes():
+def dataframes(study="delcut_firstPlusFine"):
     "Returns {4.0: {6: df, 8: df, 7: df}, ...}"
     result = {}
-    basedir = "fit_results/delcut_firstPlusFine"
+    basedir = f"fit_results/{study}"
     for direc in sorted(glob(f"{basedir}/*MeV")):
         mev = float(os.path.basename(direc)[:-3])
         result[mev] = {}
@@ -32,8 +33,31 @@ def dataframes():
     return result
 
 
-def get_column(colname, dets, weight=True):
-    dfs = dataframes()
+def get_specint(dets, study="delcut_firstPlusFine"):
+    dfs = dataframes(study=study)
+    xs = list(dfs.keys())
+    ys = []
+
+    for mev in xs:
+        y = 0
+        for nADs in [6, 8, 7]:
+            f = uproot.open(f"fit_results/{study}/{mev:.3f}MeV/" +
+                            f"ibd_eprompt_shapes_{nADs}ad.root")
+            for detno in dets:
+                hall = [1, 1, 2, 2, 3, 3, 3, 3][detno - 1]
+                det = [1, 2, 1, 2, 1, 2, 3, 4][detno - 1]
+                h = f[f"h_ibd_eprompt_inclusive_eh{hall}_ad{det}"]
+                y += sum(h)
+        ys.append(y)
+
+    return np.array(xs), np.array(ys)
+
+
+def get_column(colname, dets, weight=True, study="delcut_firstPlusFine"):
+    if colname == "specint":
+        return get_specint(dets, study=study)
+
+    dfs = dataframes(study=study)
     xs = list(dfs.keys())
     ys = []
 
