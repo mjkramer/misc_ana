@@ -164,6 +164,7 @@ def main():
                 out_lines[lineno].split()[2:]]
 
     nom_obs_evts = get_vals(1, int)
+    livetimes = get_vals(2, float)
     veto_effs = get_vals(3, float)
     nom_dmc_effs = get_vals(4, float)
     nom_bkg_rates = get_vals(9, float)
@@ -249,7 +250,11 @@ def main():
     # this isn't actually used, but we show the calculation for reference
     def obs_evt(site, det):
         i = idet(site, det)
-        return (nom_obs_evts[i] - nom_bkg_rates[i] * nom_dmc_effs[i] * veto_effs[i]) * scale_factors[i] * dmc_effs[i] / nom_dmc_effs[i] + (bkg_rates[i] * dmc_effs[i] * veto_effs[i])
+        return (nom_obs_evts[i]
+                - nom_bkg_rates[i]
+                * (livetimes[i] * nom_dmc_effs[i] * veto_effs[i])
+                ) * (scale_factors[i] * dmc_effs[i] / nom_dmc_effs[i]) \
+            + (bkg_rates[i] * (livetimes[i] * dmc_effs[i] * veto_effs[i]))
     obs_evts = new_vals(obs_evt)
 
     def replace_line(rownum, vals, fmt="%f"):
