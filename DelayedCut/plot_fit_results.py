@@ -125,94 +125,102 @@ def read_csv(csvfile):
     return pd.read_csv(csvfile, index_col=0)
 
 
-def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
+def plot_fit(studies,
+             qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
              best_or_mid="best"):
-    xs = df["cut_mev"]
-    ymin = df[f"{qty}_min1sigma"]
-    ymax = df[f"{qty}_max1sigma"]
-
-    if best_or_mid == "best":
-        ys = df[f"{qty}_best"]
-    else:
-        ys = (ymin + ymax) / 2
-
-    yerrlow = ys - ymin
-    yerrhigh = ymax - ys
-
-    # plt.figure()
-    ret = plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o")
-
-    plt.title(title)
-    plt.xlabel("Delayed low cut [MeV]")
-    plt.tight_layout()
-
-    return ret
-
-
-def plot_s2t_best(df):
-    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
-
-
-def plot_s2t_mid(df):
-    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
-
-
-def plot_dm2_best(df):
-    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
-
-
-def plot_dm2_mid(df):
-    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
-
-
-def plot_fit_all(study="delcut_firstPlusFine"):
-    os.system(f"mkdir -p gfx/fit_results/{study}")
-    df = read_csv(f"summaries/{study}.csv")
-
-    plt.figure()
-    plot_s2t_best(df)
-    plt.savefig(f"gfx/fit_results/{study}/s2t_best.pdf")
-
-    plt.figure()
-    plot_s2t_mid(df)
-    plt.savefig(f"gfx/fit_results/{study}/s2t_mid.pdf")
-
-    plt.figure()
-    plot_dm2_best(df)
-    plt.savefig(f"gfx/fit_results/{study}/dm2_best.pdf")
-
-    plt.figure()
-    plot_dm2_mid(df)
-    plt.savefig(f"gfx/fit_results/{study}/dm2_mid.pdf")
-
-
-def plot_fit_unc(df, qty, title):
-    xs = df["cut_mev"]
-    ymin = df[f"{qty}_min1sigma"]
-    ymax = df[f"{qty}_max1sigma"]
+    if type(studies) is str:
+        studies = [studies]
 
     fig, ax = plt.subplots()
-    ax.scatter(xs, (ymax - ymin)/2)
-    ax.set(xlabel="Delayed low cut [MeV]", title=title)
+
+    for study in studies:
+        df = read_csv(f"summaries/{study}.csv")
+        xs = df["cut_mev"]
+        ymin = df[f"{qty}_min1sigma"]
+        ymax = df[f"{qty}_max1sigma"]
+
+        if best_or_mid == "best":
+            ys = df[f"{qty}_best"]
+        else:
+            ys = (ymin + ymax) / 2
+
+        yerrlow = ys - ymin
+        yerrhigh = ymax - ys
+
+        ax.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o",
+                    label=study)
+
+    ax.set_title(title)
+    ax.set_xlabel("Delayed low cut [MeV]")
+    if len(studies) > 1:
+        ax.legend()
     fig.tight_layout()
 
-    return fig, ax
+    studyname = "+".join(studies)
+    outdir = f"gfx/fit_results/{studyname}"
+    filename = f"{qty}_{best_or_mid}.png"
+    os.system(f"mkdir -p {outdir}")
+    fig.savefig(f"{outdir}/{filename}")
 
 
-def plot_s2t_unc(df):
-    return plot_fit_unc(df, "s2t", r"$\sin^2 \theta_{13}$ uncertainty")
+def plot_s2t_best(studies):
+    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
 
 
-def plot_dm2_unc(df):
-    return plot_fit_unc(df, "dm2", r"$\Delta m^2_{ee}$ uncertainty")
+def plot_s2t_mid(studies):
+    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
 
 
-def plot_fit_unc_all(study):
-    os.system(f"mkdir -p gfx/fit_unc/{study}")
-    df = read_csv(f"summaries/{study}.csv")
+def plot_dm2_best(studies):
+    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
 
-    fig, ax = plot_s2t_unc(df)
-    fig.savefig(f"gfx/fit_unc/{study}/unc_s2t.pdf")
 
-    fig, ax = plot_dm2_unc(df)
-    fig.savefig(f"gfx/fit_unc/{study}/unc_dm2.pdf")
+def plot_dm2_mid(studies):
+    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
+
+
+def plot_fit_all(studies):
+    plot_s2t_best(studies)
+    plot_s2t_mid(studies)
+    plot_dm2_best(studies)
+    plot_dm2_mid(studies)
+
+
+def plot_fit_unc(studies, qty, title):
+    if type(studies) is str:
+        studies = [studies]
+
+    fig, ax = plt.subplots()
+
+    for study in studies:
+        df = read_csv(f"summaries/{study}.csv")
+        xs = df["cut_mev"]
+        ymin = df[f"{qty}_min1sigma"]
+        ymax = df[f"{qty}_max1sigma"]
+
+        ax.scatter(xs, (ymax - ymin) / 2, label=study)
+
+    ax.set_title(title)
+    ax.set_xlabel("Delayed low cut [MeV]")
+    if len(studies) > 1:
+        ax.legend()
+    fig.tight_layout()
+
+    studyname = "+".join(studies)
+    outdir = f"gfx/fit_unc/{studyname}"
+    filename = f"unc_{qty}.png"
+    os.system(f"mkdir -p {outdir}")
+    fig.savefig(f"{outdir}/{filename}")
+
+
+def plot_s2t_unc(studies):
+    plot_fit_unc(studies, "s2t", r"$\sin^2 2\theta_{13}$ uncertainty")
+
+
+def plot_dm2_unc(studies):
+    plot_fit_unc(studies, "dm2", r"$\Delta m^2_{ee}$ uncertainty")
+
+
+def plot_fit_unc_all(studies):
+    plot_s2t_unc(studies)
+    plot_dm2_unc(studies)

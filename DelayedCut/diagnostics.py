@@ -47,7 +47,7 @@ def get_specint(dets, study="delcut_firstPlusFine"):
                 hall = [1, 1, 2, 2, 3, 3, 3, 3][detno - 1]
                 det = [1, 2, 1, 2, 1, 2, 3, 4][detno - 1]
                 h = f[f"h_ibd_eprompt_inclusive_eh{hall}_ad{det}"]
-                y += sum(h)
+                y += sum(h.values())
         ys.append(y)
 
     return np.array(xs), np.array(ys)
