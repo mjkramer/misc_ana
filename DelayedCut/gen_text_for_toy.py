@@ -5,9 +5,7 @@ from glob import glob
 import os
 import sys
 
-import pandas as pd
 import numpy as np
-from scipy.interpolate import interp2d
 
 import ROOT as R
 R.PyConfig.IgnoreCommandLineOptions = True
@@ -246,7 +244,10 @@ def main():
                        amc_errs[i]**2 + alphan_errs[i]**2)
     bkg_errs = new_vals(bkg_err)
 
-    # XXX
+    def rel_delayed_eff(site, det):
+        return effcalc.scale_factor(phase, site, det)
+    rel_delayed_effs = new_vals(rel_delayed_eff)
+
     # this isn't actually used, but we show the calculation for reference
     def obs_evt(site, det):
         i = idet(site, det)
@@ -265,6 +266,7 @@ def main():
 
     replace_line(1, obs_evts, "%d")
     replace_line(4, dmc_effs, "%.6f")
+    replace_line(5, rel_delayed_effs, "%.4f")
     replace_line(9, bkg_rates, "%.4f")
     replace_line(10, bkg_errs, "%.5f")
     replace_line(11, acc_rates, "%.3f")
