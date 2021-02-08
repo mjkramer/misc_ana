@@ -203,32 +203,32 @@ def main():
         return singcalcs[i].accDailyErr(site)
     acc_errs = new_vals(acc_err)
 
-    def li9_rate(site, _det):
+    def li9_rate(site, det):
         i = idet(site, det)
         return nom_li9_rates[i] * scale_factors[i]
     li9_rates = new_vals(li9_rate)
 
-    def li9_err(site, _det):
+    def li9_err(site, det):
         i = idet(site, det)
         return nom_li9_errs[i] * scale_factors[i]
     li9_errs = new_vals(li9_err)
 
-    def fastn_rate(site, _det):
+    def fastn_rate(site, det):
         i = idet(site, det)
         return nom_fastn_rates[i] * scale_factors[i]
     fastn_rates = new_vals(fastn_rate)
 
-    def fastn_err(site, _det):
+    def fastn_err(site, det):
         i = idet(site, det)
         return nom_fastn_errs[i] * scale_factors[i]
     fastn_errs = new_vals(fastn_err)
 
-    def alphan_rate(site, _det):
+    def alphan_rate(site, det):
         i = idet(site, det)
         return nom_alphan_rates[i] * scale_factors[i]
     alphan_rates = new_vals(alphan_rate)
 
-    def alphan_err(site, _det):
+    def alphan_err(site, det):
         i = idet(site, det)
         return nom_alphan_errs[i] * scale_factors[i]
     alphan_errs = new_vals(alphan_err)
