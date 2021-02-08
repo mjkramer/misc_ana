@@ -49,11 +49,16 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
 
     ibdMultCuts = R.MultCutTool.Cuts()
     ibdMultCuts.usec_before = config["ibdDmcUsecBefore"]
-    ibdMultCuts.emin_before = config["ibdDmcEminBefore"]
+    # XXX
+    # ibdMultCuts.emin_before = config["ibdDmcEminBefore"]
+    ibdMultCuts.emin_before = prompt_min
     ibdMultCuts.emax_before = config["ibdDmcEmaxBefore"]
+    # ibdMultCuts.emax_before = prompt_max
     ibdMultCuts.usec_after = config["ibdDmcUsecAfter"]
-    ibdMultCuts.emin_after = config["ibdDmcEminAfter"]
+    # ibdMultCuts.emin_after = config["ibdDmcEminAfter"]
+    ibdMultCuts.emin_after = delayed_min
     ibdMultCuts.emax_after = config["ibdDmcEmaxAfter"]
+    # ibdMultCuts.emax_after = delayed_max
 
     return R.SinglesCalc(hSing, eMuIbd, livetime_s,
                          singleMultCuts, ibdMultCuts, eMuSingles,
@@ -254,7 +259,7 @@ def main():
         out_lines[i] = f"{part1} {part2}\n"
 
     replace_line(1, obs_evts, "%d")
-    replace_line(4, dmc_effs, "%.4f")
+    replace_line(4, dmc_effs, "%.6f")
     replace_line(9, bkg_rates, "%.4f")
     replace_line(10, bkg_errs, "%.5f")
     replace_line(11, acc_rates, "%.3f")
