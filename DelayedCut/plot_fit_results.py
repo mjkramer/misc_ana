@@ -108,15 +108,18 @@ def read_fit_file(fname):
                      dm2_max1sigma=dm2_max1sigma)
 
 
-def read_study(study):
+def read_study(study, numerical=True):
     data = []
     for direc in sorted(glob(f"fit_results/{study}/*")):
         print(direc)
-        parts = direc.split("/")[-1].split("_")
-        cut_mev = float(parts[-1][:-3])
         fit_result = read_fit_file(f"{direc}/fit_shape_2d.root")
-        row = {"cut_mev": cut_mev, **asdict(fit_result)}
-        data.append(row)
+        if numerical:
+            parts = direc.split("/")[-1].split("_")
+            cut_mev = float(parts[-1][:-3])
+            ident = {"cut_mev": cut_mev}
+        else:
+            ident = {"ident": os.path.basename(direc)}
+        data.append({**ident, **asdict(fit_result)})
     return pd.DataFrame(data)
 
 
