@@ -28,7 +28,7 @@ def dump_data_file(path, data):
 
 def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
                s2t13=None, dm2=None, bcw_bins=False, use_data=False, period=-1,
-               copy_from=None, acc_fudge_pct=None):
+               copy_from=None, acc_fudge_pct=None, remove_AD=None):
     C = os.system
 
     fit_home = os.getenv("LBNL_FIT_HOME")
@@ -73,6 +73,9 @@ def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
             else:
                 C(f"cp {orig_data_file} {confdir}/{data_file}")
 
+        if remove_AD:
+            C(f"./remove_AD.py --txt --acc {outdir} {remove_AD}")
+
         C(f"{S} genToys & {S} genEvisEnu & {S} genSuperHists & {S} genPredIBD & wait; {S} genCovMat")
 
         if use_data:
@@ -80,6 +83,9 @@ def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
                 C(f"cp {template_dir}/ibd_eprompt_shapes_{nADs}ad.root {outdir}")
         else:
             C(f"./copy_toy_prompt_spec.py {outdir}")
+
+        if remove_AD:
+            C(f"./remove_AD.py --prompt {outdir} {remove_AD}")
 
     if not no_fit:
         C(f"{S} shapeFit {period}")
@@ -98,6 +104,7 @@ def main():
     ap.add_argument("--period", type=int, default=-1)
     ap.add_argument("--copy-from")
     ap.add_argument("--acc-fudge-pct", type=float)
+    ap.add_argument("--remove-AD", type=int)
     args = ap.parse_args()
 
     run_fitter(**vars(args))
