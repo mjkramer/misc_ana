@@ -117,35 +117,18 @@ def draw_hist(h, **kwargs):
     return bstep(h.axis().edges(), h.values(), **kwargs)
 
 
-def _plot_input_spec(file_template, hist_template, title, dirname,
-                     studies, cutname, norm=False, ratio=False):
-    vals = {study: {} for study in studies}  # hall -> spectrum
-    edges = None
-
-    for study in studies:
-        for nADs in [6, 8, 7]:
-            fname = file_template.format(nADs=nADs)
-            path = f"fit_results/{study}/{cutname}/{fname}"
-            f = uproot.open(path)
-            for hall, dets in HALLDETS_LOCAL:
-                for det in dets:
-                    hname = hist_template.format(hall=hall, det=det)
-                    if hname in f:
-                        h = f[hname]
-                        edges = h.axis().edges()
-                        if hall not in vals[study]:
-                            vals[study][hall] = h.values()
-                        else:
-                            vals[study][hall] += h.values()
+def _plot_spec(edges, vals, title, plotname, cutname,
+               norm=False, ratio=False):
+    name = "+".join(vals.keys())
 
     if norm:
-        for study in studies:
+        for study in vals:
             for hall in [1, 2, 3]:
                 vals[study][hall] /= sum(vals[study][hall])
 
     if ratio:
-        assert len(studies) == 2
-        s1, s2 = studies
+        assert len(vals) == 2
+        s1, s2 = vals.keys()
         orig_vals = vals
         vals = {"_": {}}
         for hall in [1, 2, 3]:
@@ -166,20 +149,46 @@ def _plot_input_spec(file_template, hist_template, title, dirname,
 
     suffix = ".norm" if norm else ""
     suffix += ".ratio" if ratio else ""
-    name = "+".join(studies)
-    save(fig, f"gfx/{dirname}{suffix}/{name}/rawspec_{cutname}.png")
+    save(fig, f"gfx/{plotname}{suffix}/{name}/{plotname}_{cutname}.png")
 
 
-def plot_rawspec(*args, **kwargs):
+def _plot_input_spec(file_template, hist_template, title, plotname,
+                     studies, cutname, norm=False, ratio=False):
+    vals = {study: {} for study in studies}  # hall -> spectrum
+    edges = None
+
+    for study in studies:
+        for nADs in [6, 8, 7]:
+            fname = file_template.format(nADs=nADs)
+            path = f"fit_results/{study}/{cutname}/{fname}"
+            f = uproot.open(path)
+            for hall, dets in HALLDETS_LOCAL:
+                for det in dets:
+                    hname = hist_template.format(hall=hall, det=det)
+                    if hname in f:
+                        h = f[hname]
+                        edges = h.axis().edges()
+                        if hall not in vals[study]:
+                            vals[study][hall] = h.values()
+                        else:
+                            vals[study][hall] += h.values()
+
+    return _plot_spec(edges, vals, title=title, plotname=plotname,
+                      cutname=cutname, norm=norm, ratio=ratio)
+
+
+def plot_rawspec(studies, cutname, *args, **kwargs):
     return _plot_input_spec("ibd_eprompt_shapes_{nADs}ad.root",
                             "h_ibd_eprompt_inclusive_eh{hall}_ad{det}",
-                            "Raw prompt", "rawspec", *args, **kwargs)
+                            "Raw prompt", "rawspec", studies, cutname,
+                            *args, **kwargs)
 
 
-def plot_accspec(*args, **kwargs):
+def plot_accspec(studies, cutname, *args, **kwargs):
     return _plot_input_spec("accidental_eprompt_shapes_{nADs}ad.root",
                             "h_accidental_eprompt_inclusive_eh{hall}_ad{det}",
-                            "Accidental", "accspec", *args, **kwargs)
+                            "Accidental", "accspec", studies, cutname,
+                            *args, **kwargs)
 
 
 # ==============================================================================
@@ -227,14 +236,32 @@ def get_totbkg(study, cutname):
         edges, this_specs = get_corrspec(study, cutname, bkg)
         for hall in [1, 2, 3]:
             if hall not in specs:
-                specs[hall] = this_specs.copy()
+                specs[hall] = this_specs[hall]
             else:
-                specs[hall] += this_specs
+                specs[hall] += this_specs[hall]
     return edges, specs
 
 
-def _plot_output_spec():
-    pass
+def _plot_output_spec(studies, cutname, specname, norm=False, ratio=False):
+    vals = {study: {} for study in studies}  # hall -> spectrum
+    edges = None
+
+    for study in studies:
+        edges, vals[study] = get_corrspec(study, cutname, specname)
+
+    return _plot_spec(edges, vals, title=specname, plotname=specname,
+                      cutname=cutname, norm=norm, ratio=ratio)
+
+
+def plot_output_spec_all(studies):
+    for norm in [False, True]:
+        for ratio in [False, True]:
+            for specname in ["IBD",
+                             "Acc", "Li9", "Amc", "Fn", "Aln",
+                             "TotBkg"]:
+                generate(_plot_output_spec, studies, specname=specname,
+                         norm=norm, ratio=ratio)
+
 
 def plot_input(studies, key, key_err=None, **kwargs):
     fig, axs = plt.subplots(2, 2, figsize=(12.8, 9.6))
