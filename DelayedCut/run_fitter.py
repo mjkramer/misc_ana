@@ -56,7 +56,8 @@ def run_fitter(template_dir, dirname, no_fit=False, cut_mev=None,
             if (not use_data) and cut_mev:
                 C(f"./gen_text_for_toy.py {template} {outfile} {nADs} --delayed-min {cut_mev}")
             else:
-                C(f"cp {template} {outfile}")
+                # The * ensures we also copy the aux_ files if they exist
+                C(f"cp {template_dir}/*{theta13file} {outdir}")
                 if acc_fudge_pct:
                     fudge_acc(outfile, nADs, acc_fudge_pct)
             C(f"cp {template_dir}/accidental_eprompt_shapes_{nADs}ad.root {outdir}")
