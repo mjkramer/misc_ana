@@ -188,19 +188,33 @@ def plot_ratio_all_periods(study="test_newDelEff", ident="zTopThird@flat"):
     fig2.tight_layout()
 
 
-def new_vertex_effs(study="test_newDelEff", ident="zTopThird@flat",
-                    ident_nom="fullDet@flat"):
+def new_effs(stage, study="test_newDelEff", ident="zBotThird@flat",
+             ident_nom="fullDet@flat"):
     # like corr_evt but without vertex (and e_d?) correction
     def add_new_corr_evt(df):
         df["new_corr_evt"] = \
-            df.eval("(obs_evt - tot_bkg*veto_eff*mult_eff*livetime) / (veto_eff*mult_eff*livetime*delayedEff)")
-    for stage, nADs in [(1, 6), (2, 8), (3, 7)]:
-        df_cut = full_df(study, ident, nADs)
-        df_nom = full_df(study, ident_nom, nADs)
-        add_new_corr_evt(df_cut)
-        add_new_corr_evt(df_nom)
-        # XXX use actual delayed effs
-        vals = df_cut["new_corr_evt"] / df_nom["new_corr_evt"] * 0.88
-        vals = vals.fillna(0)
+            df.eval("(obs_evt - tot_bkg*veto_eff*mult_eff*livetime) / (veto_eff*mult_eff*livetime*0.88)")
+    nADs = [6, 8, 7][stage - 1]
+    df_cut = full_df(study, ident, nADs)
+    df_nom = full_df(study, ident_nom, nADs)
+    add_new_corr_evt(df_cut)
+    add_new_corr_evt(df_nom)
+    # XXX use actual delayed effs
+    vals = df_cut["new_corr_evt"] / df_nom["new_corr_evt"] * 0.88
+    vals = vals.fillna(0)
+    return vals
+
+
+def print_new_effs(study="test_newDelEff", ident="zBotThird@flat",
+                   ident_nom="fullDet@flat"):
+
+    for stage in [1, 2, 3]:
+        vals = new_effs(stage, study, ident, ident_nom)
         valstr = "\t".join(["%.4f" % v for v in vals])
         print(f"{stage}\t5\t{valstr}")
+
+
+def old_effs(stage, study="test_newDelEff", ident="zBotThird@flat"):
+    nADs = [6, 8, 7][stage - 1]
+    df = full_df(study, ident, nADs)
+    return df["delcut_eff"]
