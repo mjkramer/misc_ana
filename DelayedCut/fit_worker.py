@@ -29,8 +29,11 @@ def main():
             if random.random() < 0.1:
                 sysload()
 
-            template_dir, cut_mev = line.strip().split()
-            outdirname = f"{args.tag}/{cut_mev}MeV"
+            template_dir, cut_mev, *rest = line.strip().split()
+            if rest:
+                outdirname = f"{args.tag}/{rest[0]}"
+            else:
+                outdirname = f"{args.tag}/{cut_mev}MeV"
             os.system(f"./run_fitter.py {template_dir} {outdirname} " +
                       f"--cut-mev {cut_mev} {args.toy_opts}")
             writer.log(line)
