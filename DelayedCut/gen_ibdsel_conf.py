@@ -11,11 +11,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cut_list_file")
     ap.add_argument("outdir")
+    ap.add_argument("-t", "--template", default=template_path())
     args = ap.parse_args()
 
     os.system(f"mkdir -p {args.outdir}")
 
-    config = ConfigFile(template_path())
+    config = ConfigFile(args.template)
 
     for line in open(args.cut_list_file):
         cut_mev = float(line.strip())
