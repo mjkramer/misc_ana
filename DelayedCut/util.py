@@ -17,8 +17,9 @@ def keep(o):
     return o
 
 
-def dump_fit_results(study):
-    df = read_study(study)
+def dump_fit_results(study, **kw):
+    os.system("mkdir -p summaries")
+    df = read_study(study, **kw)
     df.to_csv(f"summaries/{study}.csv")
 
 
