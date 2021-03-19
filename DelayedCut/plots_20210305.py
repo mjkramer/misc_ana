@@ -37,7 +37,8 @@ def savefig(fig, category, study, fname):
         fig.savefig(f"{direc}/{fname}.{ext}")
 
 
-def plot_labeled_fits(study, qty, title, best_or_mid="best"):
+def plot_labeled_fits(study, qty, title, best_or_mid="best",
+                      save=True, **kw):
     df = pd.read_csv(f"summaries/{study}.csv", index_col=0)
     if best_or_mid == "mid":
         expr = f"0.5 * ({qty}_min1sigma + {qty}_max1sigma)"
@@ -54,40 +55,40 @@ def plot_labeled_fits(study, qty, title, best_or_mid="best"):
     yerrlow = ys - ymin
     yerrhigh = ymax - ys
 
-    fig, ax = plt.subplots()
-    ax.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o")
-    # ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    # fig, ax = plt.subplots()
+    plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o", **kw)
+    # plt.gca().set_xticklabels(plt.gca().get_xticklabels(), rotation=45)
 
-    ax.set_title(title)
-    fig.tight_layout()
+    plt.title(title)
+    plt.tight_layout()
 
-    savefig(fig, "labeled_fit_results", study, f"{qty}_{best_or_mid}")
+    if save:
+        savefig(plt.gcf(), "labeled_fit_results", study,
+                f"{qty}_{best_or_mid}")
 
-    return fig, ax
 
-
-def plot_labeled_s2t_best(study):
+def plot_labeled_s2t_best(study, **kw):
     return plot_labeled_fits(study, "s2t",
                              r"$\sin^2 2\theta_{13}$ (best fit)",
-                             "best")
+                             "best", **kw)
 
 
-def plot_labeled_s2t_mid(study):
+def plot_labeled_s2t_mid(study, **kw):
     return plot_labeled_fits(study, "s2t",
                              r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)",
-                             "mid")
+                             "mid", **kw)
 
 
-def plot_labeled_dm2_best(study):
+def plot_labeled_dm2_best(study, **kw):
     return plot_labeled_fits(study, "dm2",
                              r"$\Delta m^2_{ee}$ (best fit)",
-                             "best")
+                             "best", **kw)
 
 
-def plot_labeled_dm2_mid(study):
+def plot_labeled_dm2_mid(study, **kw):
     return plot_labeled_fits(study, "dm2",
                              r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)",
-                             "mid")
+                             "mid", **kw)
 
 
 def plot_labeled_fits_all(study):
