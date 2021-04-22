@@ -24,7 +24,7 @@ def main():
         title, cut_str = line.strip().split()
         cut = CutSpec.from_str(cut_str)
         config["ibdShowerMuChgCut"] = cut.shower_pe
-        config["ibdShowerMuPostVeto_us"] = cut.shower_sec
+        config["ibdShowerMuPostVeto_us"] = 1e6 * cut.shower_sec
         config["ibdDelayedEmin"] = cut.delayed_emin_mev
         config["ibdDmcEminAfter"] = cut.delayed_emin_mev
         config["ibdPromptEmin"] = cut.prompt_emin_mev
