@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,7 +10,10 @@ from util import dets_for_stage2_file
 
 class DqPlotter:
     def __init__(self, stage2_pbp_file, drl_file="data/dbd_runlist_p20a.txt",
-                 fits_dir="data/fits"):
+                 fits_dir="data/fits", gfx_dir="gfx"):
+        self.gfx_dir = gfx_dir
+        os.system(f"mkdir -p {gfx_dir}")
+
         self.hall = int(stage2_pbp_file.split(".")[-3][2])
         self.dets = dets_for_stage2_file(stage2_pbp_file)
 
@@ -61,7 +66,7 @@ class DqPlotter:
         axes[1].set_ylabel("Livetime[d]")
 
         fig.tight_layout()
-        fig.savefig(f"gfx/{tag}.eh{self.hall}.pdf")
+        fig.savefig(f"{self.gfx_dir}/{tag}.eh{self.hall}.pdf")
 
         return fig, axes
 
