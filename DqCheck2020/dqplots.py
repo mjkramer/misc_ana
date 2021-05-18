@@ -13,6 +13,7 @@ class DqPlotter:
                  fits_dir="data/fits", gfx_dir="gfx"):
         self.gfx_dir = gfx_dir
         os.system(f"mkdir -p {gfx_dir}")
+        os.system(f"mkdir -p {gfx_dir}/data")
 
         self.hall = int(stage2_pbp_file.split(".")[-3][2])
         self.dets = dets_for_stage2_file(stage2_pbp_file)
@@ -57,6 +58,7 @@ class DqPlotter:
                 assert (yerr.index == yss[i].index).all()
             axes[0].errorbar(yss[i].index, yss[i], yerr=yerr, fmt="o",
                              ms=markersize, label=f"AD{det}")
+            yss[i].to_csv(f"{self.gfx_dir}/data/{tag}.eh{self.hall}.ad{det}.csv")
 
         axes[0].set_title(f"{title} (EH{self.hall})")
         axes[0].legend()
