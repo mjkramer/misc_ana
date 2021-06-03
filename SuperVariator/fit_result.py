@@ -125,9 +125,11 @@ def dump_fit_results(study, **kw):
 
 def read_cuts(study):
     cuts = []
-    path = f"data/job_input/{study}/input.list"
+    # path = f"data/job_input/{study}/input.list"
+    path = f"data/cutlists/{study}.txt"
     for line in open(path):
-        _direc, title, cutspec_str = line.strip().split()
+        # _direc, title, cutspec_str = line.strip().split()
+        title, cutspec_str = line.strip().split()
         cutspec = CutSpec.from_str(cutspec_str)
         cuts.append({"title": title, **asdict(cutspec)})
     return pd.DataFrame(cuts)
@@ -140,4 +142,4 @@ def read_full(study):
     """
     df_cuts = read_cuts(study)
     df_fit = read_csv(f"data/summaries/{study}.csv")
-    return df_cuts.join(df_fit.drop("title", axis=1))
+    return pd.merge(df_cuts, df_fit)
