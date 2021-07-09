@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# TODO:
+# Use a 0.5~MeV selection as our template, instead of 0.7 MeV (to get the full singles spectrum)
+# Zero out the bins in the singles spectrum below prompt_emin
+# Tell PromptEffCalc to use 0.5 MeV as the reference instead of 0.7 MeV
+# Figure out why the correlated bkg rates aren't changing in the outputted Theta13 files
+# Update the multiplicity efficiency?
+
 import argparse
 import os
 import sys

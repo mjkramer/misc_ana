@@ -18,7 +18,7 @@ for lib in ["common.so", "stage2.so"]:
                                 f"selector/_build/{lib}"))
 
 sys.path += [os.getenv("IBDSEL_HOME") + "/fit_prep"]
-from delayed_eff import DelayedEffCalc
+from prompt_eff import PromptEffCalc
 
 from util import keep, read_ibdsel_config
 
@@ -36,7 +36,7 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
         return None
 
     livetime_s = sum(df["livetime_s"])
-    eMuIbd = sum(df["vetoEff"] * df["livetime_s"]) / livetime_s
+    # eMuIbd = sum(df["vetoEff"] * df["livetime_s"]) / livetime_s
     eMuSingles = sum(df["vetoEffSingles"] * df["livetime_s"]) / livetime_s
 
     singleMultCuts = R.MultCutTool.Cuts()
@@ -55,7 +55,7 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
     ibdMultCuts.emin_after = config["ibdDmcEminAfter"]
     ibdMultCuts.emax_after = config["ibdDmcEmaxAfter"]
 
-    return R.SinglesCalc(hSing, eMuIbd, livetime_s,
+    return R.SinglesCalc(hSing, livetime_s,
                          singleMultCuts, ibdMultCuts, eMuSingles,
                          prompt_min, prompt_max,
                          delayed_min, delayed_max,
@@ -88,20 +88,25 @@ def dets_for(site):
     return [1, 2, 3, 4] if site == 3 else [1, 2]
 
 
+def get_base_selname(direc):
+    "tag@config@mod1@mod2@..._xxxMeV -> tag@config_xxxMeV"
+    selname = os.path.basename(direc)
+    if len(selname.split("@")) > 2:
+        base = "@".join(selname.split("@")[:2])
+        suffix = "_".join("@".join(selname.split("@")[2:]).split("_")[1:])
+        selname = f"{base}_{suffix}"
+    return selname
+
+
 def find_stage2_file(template_fname, nADs, site):
     direc = os.path.dirname(template_fname)
-    selname = os.path.basename(direc)
+    selname = get_base_selname(direc)
     return f"{direc}/../../stage2_pbp/{selname}/stage2.pbp.eh{site}.{nADs}ad.root"
 
 
 def find_ibdsel_config(template_fname):
     direc = os.path.dirname(template_fname)
-    selname = os.path.basename(direc)
-    # tag@config@mod1@mod2_xxxMeV -> tag@config_xxxMeV
-    if len(selname.split("@")) > 2:
-        base = "@".join(selname.split("@")[:2])
-        suffix = "_".join("@".join(selname.split("@")[2:]).split("_")[1:])
-        selname = f"{base}_{suffix}"
+    selname = get_base_selname(direc)
     return glob(f"{direc}/../../stage2_pbp/{selname}/config.*.txt")[0]
 
 
@@ -112,8 +117,8 @@ def main():
     ap.add_argument("nADs", type=int)
     ap.add_argument("--prompt-min", type=float, default=0.7)
     ap.add_argument("--prompt-max", type=float, default=12)
-    ap.add_argument("--delayed-min", type=float, default=6)
-    ap.add_argument("--delayed-max", type=float, default=12)
+    # ap.add_argument("--delayed-min", type=float, default=6)
+    # ap.add_argument("--delayed-max", type=float, default=12)
     args = ap.parse_args()
 
     f_in = open(args.template)
@@ -125,22 +130,23 @@ def main():
     singcalcs = [make_singles_calc(nominal_ibdsel_config_file,
                                    stage2_files[site-1], det,
                                    args.prompt_min, args.prompt_max,
-                                   args.delayed_min, args.delayed_max)
+                                   # args.delayed_min, args.delayed_max)
+                                   6, 12)
                  for site in [1, 2, 3] for det in dets_for(site)]
 
-    print(singcalcs)
-
     phase = {6: 1, 8: 2, 7: 3}[args.nADs]
-    effcalc = DelayedEffCalc(nominal_ibdsel_config_file)
-    effcalc.cut = args.delayed_min
-    scale_factors = [1] * 8
-    for site in [1, 2, 3]:
-        for det in dets_for(site):
-            if det_active(args.nADs, site, det):
-                # XXX switch to prompt scale factors
-                raise Exception("Yo fix me")
-                scale_factors[idet(site, det)] = \
-                    effcalc.scale_factor(phase, site, det)
+    # NB: Here, PromptEffCalc only uses the config file to get the prompt min,
+    # which we override anyway.
+    effcalc = PromptEffCalc(nominal_ibdsel_config_file)
+    effcalc.cut = args.prompt_min
+    # scale_factors = [1] * 8
+    # for site in [1, 2, 3]:
+    #     for det in dets_for(site):
+    #         if det_active(args.nADs, site, det):
+    #             # XXX switch to prompt scale factors
+    #             raise Exception("Yo fix me")
+    #             scale_factors[idet(site, det)] = \
+    #                 effcalc.scale_factor(phase, site, det)
 
     out_lines = []
     line_indices = {}
@@ -175,8 +181,8 @@ def main():
     nom_li9_errs = get_vals(14, float)
     nom_fastn_rates = get_vals(15, float)
     nom_fastn_errs = get_vals(16, float)
-    amc_rates = get_vals(17, float)
-    amc_errs = get_vals(18, float)
+    nom_amc_rates = get_vals(17, float)
+    nom_amc_errs = get_vals(18, float)
     nom_alphan_rates = get_vals(19, float)
     nom_alphan_errs = get_vals(20, float)
 
@@ -205,34 +211,44 @@ def main():
         return singcalcs[i].accDailyErr(site)
     acc_errs = new_vals(acc_err)
 
-    def li9_rate(site, _det):
+    def li9_rate(site, det):
         i = idet(site, det)
-        return nom_li9_rates[i] * scale_factors[i]
+        return nom_li9_rates[i] * effcalc.li9_rel_eff(site, det)
     li9_rates = new_vals(li9_rate)
 
-    def li9_err(site, _det):
+    def li9_err(site, det):
         i = idet(site, det)
-        return nom_li9_errs[i] * scale_factors[i]
+        return nom_li9_errs[i] * effcalc.li9_rel_eff(site, det)
     li9_errs = new_vals(li9_err)
 
-    def fastn_rate(site, _det):
+    def fastn_rate(site, det):
         i = idet(site, det)
-        return nom_fastn_rates[i] * scale_factors[i]
+        return nom_fastn_rates[i] * effcalc.fastn_rel_eff(site, det)
     fastn_rates = new_vals(fastn_rate)
 
-    def fastn_err(site, _det):
+    def fastn_err(site, det):
         i = idet(site, det)
-        return nom_fastn_errs[i] * scale_factors[i]
+        return nom_fastn_errs[i] * effcalc.fastn_rel_eff(site, det)
     fastn_errs = new_vals(fastn_err)
 
-    def alphan_rate(site, _det):
+    def amc_rate(site, det):
         i = idet(site, det)
-        return nom_alphan_rates[i] * scale_factors[i]
+        return nom_amc_rates[i] * effcalc.amc_rel_eff(site, det)
+    amc_rates = new_vals(amc_rate)
+
+    def amc_err(site, det):
+        i = idet(site, det)
+        return nom_amc_errs[i] * effcalc.amc_rel_eff(site, det)
+    amc_errs = new_vals(amc_err)
+
+    def alphan_rate(site, det):
+        i = idet(site, det)
+        return nom_alphan_rates[i] * effcalc.alphan_rel_eff(site, det)
     alphan_rates = new_vals(alphan_rate)
 
-    def alphan_err(site, _det):
+    def alphan_err(site, det):
         i = idet(site, det)
-        return nom_alphan_errs[i] * scale_factors[i]
+        return nom_alphan_errs[i] * effcalc.alphan_rel_eff(site, det)
     alphan_errs = new_vals(alphan_err)
 
     def bkg_rate(site, det):
@@ -249,10 +265,10 @@ def main():
 
     # XXX
     # this isn't actually used, but we show the calculation for reference
-    def obs_evt(site, det):
-        i = idet(site, det)
-        return (nom_obs_evts[i] - nom_bkg_rates[i] * nom_dmc_effs[i] * veto_effs[i]) * scale_factors[i] * dmc_effs[i] / nom_dmc_effs[i] + (bkg_rates[i] * dmc_effs[i] * veto_effs[i])
-    obs_evts = new_vals(obs_evt)
+    # def obs_evt(site, det):
+    #     i = idet(site, det)
+    #     return (nom_obs_evts[i] - nom_bkg_rates[i] * nom_dmc_effs[i] * veto_effs[i]) * scale_factors[i] * dmc_effs[i] / nom_dmc_effs[i] + (bkg_rates[i] * dmc_effs[i] * veto_effs[i])
+    # obs_evts = new_vals(obs_evt)
 
     def replace_line(rownum, vals, fmt="%f"):
         i = line_indices[rownum]
@@ -260,7 +276,7 @@ def main():
         part2 = " ".join(fmt % v for v in vals)
         out_lines[i] = f"{part1} {part2}\n"
 
-    replace_line(1, obs_evts, "%d")
+    # replace_line(1, obs_evts, "%d")
     replace_line(4, dmc_effs, "%.4f")
     replace_line(9, bkg_rates, "%.4f")
     replace_line(10, bkg_errs, "%.5f")
