@@ -97,6 +97,11 @@ def find_stage2_file(template_fname, nADs, site):
 def find_ibdsel_config(template_fname):
     direc = os.path.dirname(template_fname)
     selname = os.path.basename(direc)
+    # tag@config@mod1@mod2_xxxMeV -> tag@config_xxxMeV
+    if len(selname.split("@")) > 2:
+        base = "@".join(selname.split("@")[:2])
+        suffix = "_".join("@".join(selname.split("@")[2:]).split("_")[1:])
+        selname = f"{base}_{suffix}"
     return glob(f"{direc}/../../stage2_pbp/{selname}/config.*.txt")[0]
 
 
