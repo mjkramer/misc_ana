@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 
 from datetime import datetime, timedelta
+from itertools import chain
+from multiprocessing import Pool
 import os
 
 import pandas as pd
 
 from DBConn import DBConn
+
+
+SITEDETS = [(1, 1), (1, 2), (2, 1), (2, 2),
+            (3, 1), (3, 2), (3, 3), (3, 4)]
+
 
 
 class DayLister:
@@ -33,7 +40,6 @@ class DayLister:
 class EnergyScaleTable:
     def __init__(self, dbname="offline_db_ihep", **kwargs):
         self.db = DBConn(dbname, **kwargs)
-        self.daylister = DayLister()
 
     def pe_evis(self, site, det, when):
         sitemask = 4 if site == 3 else site
@@ -45,23 +51,32 @@ class EnergyScaleTable:
 
         return self.db.execute(query).fetchone()[0]
 
-    def dump(self, fname="data/energy_scales.csv"):
-        def gen_data():
-            for site in [1, 2, 3]:
-                for det in [1, 2, 3, 4] if site == 3 else [1, 2]:
-                    days = self.daylister.days_for(site, det)
-                    for day in days:
-                        day0 = datetime(2011, 12, 24)
-                        absday = day0 + timedelta(days=day)
-                        escale = self.pe_evis(site, det, absday)
-                        print((site, det, day, escale), flush=True)
-                        yield {"site": site, "det": det, "day": day,
-                               "escale": escale}
 
-        data = pd.DataFrame(gen_data())
-        data.to_csv(fname, index=False)
+# Should be internal to 'dump', but we get an error
+# ("can't pickle local function")
+def get_rows(site, det):
+    table = EnergyScaleTable()
+    days = DayLister().days_for(site, det)
+
+    def gen():
+        for day in days:
+            day0 = datetime(2011, 12, 24)
+            absday = day0 + timedelta(days=day)
+            escale = table.pe_evis(site, det, absday)
+            print((day, site, det, escale), flush=True)
+            yield {"day": day, "site": site, "det": det,
+                   "escale": escale}
+
+    return list(gen())
+
+
+def dump(fname="data/energy_scales.csv"):
+    results = Pool(processes=8).starmap(get_rows, SITEDETS)
+
+    data = pd.DataFrame(chain(*results))
+    data.sort_values(["day", "site", "det"], inplace=True)
+    data.to_csv(fname, index=False)
 
 
 if __name__ == '__main__':
-    table = EnergyScaleTable()
-    table.dump()
+    dump("data/energy_scales_par.csv")
