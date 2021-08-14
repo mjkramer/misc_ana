@@ -64,10 +64,13 @@ def get_rows(sitedet):
         for prevday in prevdays:
             day = prevday + 1
             absday = DAY0 + timedelta(days=day)
-            gain = avg_gain(site, det, absday)
-            print(day, site, det, gain)
-            yield {"day": day, "site": site, "det": det,
-                   "gain": gain}
+            try:
+                gain = avg_gain(site, det, absday)
+                print(day, site, det, gain)
+                yield {"day": day, "site": site, "det": det,
+                       "gain": gain}
+            except Exception:
+                print("FAIL", day, site, det)
 
     return list(gen())
 
