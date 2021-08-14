@@ -8,7 +8,6 @@ from multiprocessing import Pool
 import os
 import sys
 
-from Gaudi.Configuration import ApplicationMgr
 from GaudiPython import AppMgr, gbl
 
 from util27 import SITEDETS, DAY0, DayLister, dictlistsort
@@ -21,15 +20,14 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 Detector = gbl.DayaBay.Detector  # without this, can't access gbl.Site
 Site = gbl.Site
 
-theApp = ApplicationMgr()
-theApp.ExtSvc.append("DybPmtCalibSvc/DybPmtCalibSvc")
-theApp.ExtSvc.append("DybChannelQualitySvc/DybChannelQualitySvc")
-
 appMgr = AppMgr()
-appMgr.initialize()
+appMgr.createSvc("DybPmtCalibSvc")
+appMgr.createSvc("DybChannelQualitySvc")
+appMgr.createSvc("DybCableSvc")
 
 calibSvc = appMgr.service("DybPmtCalibSvc", "IPmtCalibSvc")
 cqSvc = appMgr.service("DybChannelQualitySvc", "IChannelQualitySvc")
+cableSvc = appMgr.service("DybCableSvc", "ICableSvc")
 
 
 def avg_gain(site, det, when):
@@ -42,6 +40,7 @@ def avg_gain(site, det, when):
 
     sm_calib = gbl.ServiceMode(ctx, 1)
     sm_cq = gbl.ServiceMode(ctx, 0)
+    sm_cable = gbl.ServiceMode(ctx, 0)
 
     cq = cqSvc.channelQuality(sm_cq)
 
@@ -49,8 +48,13 @@ def avg_gain(site, det, when):
 
     for channelid in cq.channels():
         if cq.good(channelid):
-            tot += calibSvc.fineGainCalibData(channelid, sm_calib).m_speHigh
-            n += 1
+            sensorid = cableSvc.sensor(channelid, sm_cable)
+            if sensorid.isAD():
+                pmtId = gbl.DayaBay.AdPmtSensor(sensorid.fullPackedData())
+                if pmtId.is8inch():
+                    cal = calibSvc.fineGainCalibData(channelid, sm_calib)
+                    tot += cal.m_speHigh
+                    n += 1
 
     return tot / n
 
