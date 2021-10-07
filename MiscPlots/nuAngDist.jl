@@ -143,11 +143,11 @@ end
 function plot_Ee1_diff_vs_cosθ()
     rEν = range(2., 9., step=1.)
     cosθ = cosθspace()
-    Es = [Ee1.(cosθ, Eν) .- Eν for Eν in rEν]
+    Es = [Eν .- Ee1.(cosθ, Eν) for Eν in rEν]
     plot(cosθ, Es, labels=labels(rEν),
-         title="Positron energy (minus antineutrino energy) vs cos θ",
+         title="Antineutrino energy minus positron energy vs cos θ",
          xlabel="cos θ",
-         ylabel="\$E_e - E_\\nu\$ [MeV]")
+         ylabel="\$E_\\nu - E_e\$ [MeV]")
 end
 
 function frob!(xss, yss)
