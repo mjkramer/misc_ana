@@ -3,7 +3,7 @@ import os
 import ROOT as R
 from root_pandas import read_root
 
-from util import read_ibdsel_config
+from util import keep, read_ibdsel_config
 
 
 R.gROOT.ProcessLine(".L external/FukushimaLambertW.cc+")
@@ -30,21 +30,36 @@ def params_from_config(config_fname):
     return result
 
 
-def loadAccUncMC(selname, nADs, site, det):
-    home = os.getenv("IBDSEL_HOME")
-    stage2_dir = f"{home}/../data/stage2_pbp/{selname}"
-
-    stage2_fname = f"{stage2_dir}/stage2.pbp.eh{site}.{nADs}ad.root"
-    f = R.TFile(stage2_fname)
-    hSing = f.Get(f"h_single_AD{det}")
-    df = read_root(stage2_fname, "results").query(f"detector == {det}")
+def loadAccUncMC(selname, site, det, stage2_base=None, nADs_list=[6, 8, 7]):
+    if stage2_base is None:
+        home = os.getenv("IBDSEL_HOME")
+        stage2_dir = f"{home}/../data/stage2_pbp/{selname}"
+    else:
+        stage2_dir = f"{stage2_base}/{selname}"
 
     configname = selname.split("@")[1]
     config_fname = f"{stage2_dir}/config.{configname}.txt"
-
     pars = params_from_config(config_fname)
-    pars.livetime_s = sum(df["livetime_s"])
-    pars.vetoEffSingles = sum(df["vetoEffSingles"] * df["livetime_s"]) \
-        / pars.livetime_s
+
+    nonVetoedLivetime = 0.
+    hSing = None
+
+    for nADs in nADs_list:
+        print(nADs, site, det)
+        stage2_fname = f"{stage2_dir}/stage2.pbp.eh{site}.{nADs}ad.root"
+        f = R.TFile(stage2_fname)
+        hSingThis = f.Get(f"h_single_AD{det}")
+        if not hSingThis:
+            continue
+        if hSing is None:
+            hSing = keep(hSingThis.Clone())
+        else:
+            hSing.Add(hSingThis)
+        df = read_root(stage2_fname, "results").query(f"detector == {det}")
+
+        pars.livetime_s += sum(df["livetime_s"])
+        nonVetoedLivetime += sum(df["vetoEffSingles"] * df["livetime_s"])
+
+    pars.vetoEffSingles = nonVetoedLivetime / pars.livetime_s
 
     return R.AccUncMC(pars, hSing)

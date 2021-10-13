@@ -12,6 +12,9 @@ static double fine_integral(const TH1F& h_, double x1, double x2)
 {
   TH1F& h = const_cast<TH1F&>(h_);
 
+  x1 = x1 > h.GetXaxis()->GetXmin() ? x1 : h.GetXaxis()->GetXmin();
+  x2 = x2 < h.GetXaxis()->GetXmax() ? x2 : h.GetXaxis()->GetXmax();
+
   const int bin1 = h.FindBin(x1);
   const double frac1 =
     1 - ((x1 - h.GetBinLowEdge(bin1)) / h.GetBinWidth(bin1));
@@ -54,6 +57,12 @@ void AccUncMC::fluctuate()
     const double randVal = ran_.PoissonD(nomVal);
     hSing_.SetBinContent(bin, randVal);
   }
+}
+
+void AccUncMC::reset()
+{
+  hSing_.Reset();
+  hSing_.Add(&hSingNom_);
 }
 
 double AccUncMC::singlesCount(double emin, double emax) const

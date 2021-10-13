@@ -20,13 +20,14 @@ public:
   double accDaily() const;
   double randAccDaily();
   double accDailyUnc(size_t samples=10000);
+  void fluctuate();
+  void reset();
 
 private:
   static constexpr double DT_MAX_US = 200;
   static constexpr double PRE_WINDOW_US = 400;
   static constexpr double POST_WINDOW_US = 200;
 
-  void fluctuate();
   double singlesCount(double emin, double emax) const;
   double isolEff() const;
   double calcHz(double emin, double emax) const;

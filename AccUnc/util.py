@@ -1,3 +1,14 @@
+def keep(o):
+    import ROOT as R
+    R.SetOwnership(o, False)     # don't delete it, python!
+    try:
+        o.SetDirectory(R.gROOT)  # don't delete it, root!
+        # o.SetDirectory(0)
+    except Exception:
+        pass                     # unless you weren't going to anyway
+    return o
+
+
 def read_ibdsel_config(fname):
     results = {}
     for line in open(fname):
