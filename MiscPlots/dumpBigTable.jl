@@ -1,5 +1,6 @@
 using CSV
 using DataFrames
+using Printf
 
 function ibd_rate(df, AD)
     # NB: LBNL analysis does not treat target mass uncertainty
@@ -102,7 +103,17 @@ function fmtrow(cols, name="")
     return "  $name&  " * join(cols, " & ") * " \\\\"
 end
 
-function getrow(df, spec)
+function dets2skip(nADs)
+    if nADs == 6
+        return [4, 8]
+    elseif nADs == 8
+        return []
+    elseif nADs == 7
+        return [1]
+    end
+end
+
+function getrow(df, spec, nADs)
     if isnothing(spec)
         return raw"  \midrule"
     end
@@ -120,14 +131,23 @@ function getrow(df, spec)
             n = ndigits(src[1])
         elseif typeof(src) <: Function
             val, err, n = src(df, AD)
+            if isnan(val); val = 0.; end
+            if isnan(err); err = 0.; end
         end
 
         if isnothing(err)
-            return fmt(val, n)
+            cell = fmt(val, n)
         else
-            return "$(fmt(val, n)) \$\\pm\$ $(fmt(err, n))"
+            cell = "$(fmt(val, n)) \$\\pm\$ $(fmt(err, n))"
         end
+
+        if AD in dets2skip(nADs)
+            cell = "\\phantom{$cell}"
+        end
+
+        return cell
     end
+
 
     cells = getcell.(1:8)
     return fmtrow(cells, name)
@@ -137,7 +157,7 @@ function printrow(args...)
     println(fmtrow(args...))
 end
 
-function dump_table(df::DataFrame)
+function dump_table(df::DataFrame, nADs)
     println(raw"\begin{tabular}{lcccccccc}")
     println(raw"  \toprule")
     hallheads = ["\\multicolumn{$n}{c}{EH$i}"
@@ -148,13 +168,18 @@ function dump_table(df::DataFrame)
     println(raw"  \midrule")
 
     for spec in OUT_ROWS
-        println(getrow(df, spec))
+        println(getrow(df, spec, nADs))
     end
 
     println(raw"  \bottomrule")
     println(raw"\end{tabular}")
 end
 
+function get_nADs(path)
+    m = match(r"_(.)ad\.txt$", path)
+    return parse(Int, m.captures[1])
+end
+
 function dump_table(path::String)
-    read_theta13(path) |> dump_table
+    dump_table(read_theta13(path), get_nADs(path))
 end
