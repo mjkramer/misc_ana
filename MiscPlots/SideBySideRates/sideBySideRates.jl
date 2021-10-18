@@ -42,14 +42,14 @@ function predict_full(det, ndets::AbstractArray=[6, 8, 7])
     return sum(rates .* wts)
 end
 
-function predict_simple(det, a...)
+function predict_simple(det)
     bl = read_baselines()
     cores = names(bl)[2:end]
 
     return masscorr(det) * sum(1/bl[det, core]^2 for core in cores)
 end
 
-predict(a...; kw...) = predict_simple(a...; kw...)
+# predict(a...; kw...) = predict_simple(a...; kw...)
 
 function ibd_rate(det, ndets::AbstractArray=[6, 8, 7])
     t13 = read_theta13.(ndets)
@@ -70,14 +70,15 @@ myzip(a) = @pipe zip(a...) |> map(collect, _)
 function sidebyside_data(ndets::AbstractArray=[6, 8, 7])
     meas_rates, meas_errs =
         @pipe ibd_rate.(1:8, Ref(ndets)) |> myzip
-    # rawpred = predict.(1:8, Ref(ndets))
-    rawpred = predict_simple.(1:8, Ref(ndets))
-    wts = 1 ./ meas_errs.^2 |> nan2zero
-    scales = meas_rates ./ rawpred |> nan2zero
-    scale = mean(scales, weights(wts))
-    pred_rates = scale .* rawpred
+    pred_simple = predict_simple.(1:8)
+    pred_full = predict_full.(1:8, Ref(ndets))
+    # wts = 1 ./ meas_errs.^2 |> nan2zero
+    # scales = meas_rates ./ rawpred |> nan2zero
+    # scale = mean(scales, weights(wts))
+    # pred_rates = scale .* rawpred
 
-    return DataFrame(pred_rates = pred_rates |> nan2missing,
+    return DataFrame(pred_simple = pred_simple,
+                     pred_full = pred_full |> nan2missing,
                      meas_rates = meas_rates |> nan2missing,
                      meas_errs = meas_errs |> nan2missing)
 end
@@ -91,25 +92,27 @@ function plot_lianghong()
     df6 = sidebyside_data([6])
 
     function getvals(df, plotdets, normdets)
-        pred_norm = mean(df.pred_rates[normdets])
+        pred_simple_norm = mean(df.pred_simple[normdets])
+        pred_full_norm = mean(df.pred_full[normdets])
         meas_norm = mean(df.meas_rates[normdets])
 
-        pred_ratios = df.pred_rates[plotdets] ./ pred_norm
+        pred_simple_ratios = df.pred_simple[plotdets] ./ pred_simple_norm
+        pred_full_ratios = df.pred_full[plotdets] ./ pred_full_norm
         meas_ratios = df.meas_rates[plotdets] ./ meas_norm
         meas_ratio_errs = df.meas_errs[plotdets] ./ meas_norm
-        return pred_ratios, meas_ratios, meas_ratio_errs
+        return pred_simple_ratios, pred_full_ratios, meas_ratios, meas_ratio_errs
     end
 
     function build(desc)
         unwrap(l) = cat(l..., dims=1) # flatten array of arrays
-        # return @pipe (getvals.(myzip(desc))...) |> myzip |> map(unwrap, _)
+        return @pipe (getvals.(myzip(desc)...)) |> myzip |> map(unwrap, _)
 
-        results = (getvals(args...) for args in desc)
-        pred_wrap, meas_wrap, meas_err_wrap = myzip(results)
-        return map(unwrap, (pred_wrap, meas_wrap, meas_err_wrap))
+        # results = (getvals(args...) for args in desc)
+        # pred_wrap, meas_wrap, meas_err_wrap = myzip(results)
+        # return map(unwrap, (pred_wrap, meas_wrap, meas_err_wrap))
     end
 
-    ypred, ymeas, ymeas_err =
+    ypred_simple, ypred_full, ymeas, ymeas_err =
         build([(df68, [1], [2]),
                (df78, [3], [4]),
                (df6, [5, 6, 7], [5, 6, 7]),
@@ -117,8 +120,10 @@ function plot_lianghong()
                ])
 
     xpred_hack = [0.5, eachindex(labels)..., length(labels)+0.5]
-    ypred_hack = [ypred[1], ypred..., ypred[end]]
-    plot(xpred_hack, ypred_hack, st=:stepmid, ls=:dash, c=:red, label="Expected")
+    ypred_simple_hack = [ypred_simple[1], ypred_simple..., ypred_simple[end]]
+    ypred_full_hack = [ypred_full[1], ypred_full..., ypred_full[end]]
+    plot(xpred_hack, ypred_simple_hack, st=:stepmid, ls=:dash, c=:red, label="Exp. (simple)")
+    plot!(xpred_hack, ypred_full_hack, st=:stepmid, ls=:dash, c=:blue, label="Exp. (full)")
 
     scatter!(ymeas, yerror=ymeas_err, xerror=0.5, c=:black, label="Observed")
     vline!([1.5, 2.5, 5.5], ls=:dash, c=:black, label=nothing)
