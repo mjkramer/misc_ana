@@ -2,16 +2,26 @@ using CSV
 using DataFrames
 using Printf
 
+inf2zero(x) = isinf(x) ? zero(x) : x
+
+# See SideBySideRates/sideBySideRates.jl for summing over data periods
 function ibd_rate(df, AD)
     # NB: LBNL analysis does not treat target mass uncertainty
 
     r = df[AD, :]
     massCorr = df[1, :target_mass] / r.target_mass
     denom = r.livetime * r.veto_eff * r.mult_eff
-    k = massCorr / denom
+    k = massCorr / denom |> inf2zero
 
     rate = k*r.obs_evt - r.tot_bkg
-    err = sqrt((k^2 * r.obs_evt) + r.tot_bkg_unc^2)
+    err_stat = k * sqrt(r.obs_evt)
+    err_syst = r.tot_bkg_unc
+    return rate, err_stat, err_syst
+end
+
+function fmt_ibd_rate(df, AD)
+    rate, err_stat, err_syst = ibd_rate(df, AD)
+    err = sqrt(err_stat^2 + err_syst^2)
     ndigits = 2
     return rate, err, ndigits
 end
@@ -51,7 +61,7 @@ OUT_ROWS = [
     raw"$^{241}$AmC-$^{13}$C (day$^{-1}$)" => (:amc_bkg, :amc_bkg_unc),
     raw"$^{13}$C($\alpha,n$)-$^{16}$O (day$^{-1}$)" => (:alphan_bkg, :alphan_bkg_unc),
     nothing,
-    raw"IBD rate (day$^{-1}$)" => ibd_rate
+    raw"IBD rate (day$^{-1}$)" => fmt_ibd_rate
 ]
 
 # after the decimal place
