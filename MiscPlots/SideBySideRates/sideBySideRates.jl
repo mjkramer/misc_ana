@@ -5,6 +5,10 @@ include("readers.jl")
 using Pipe: @pipe
 using StatsBase
 
+inf2zero(a::AbstractArray) = [(isinf(x) ? zero(x) : x) for x in a]
+nan2zero(a::AbstractArray) = [(isnan(x) ? zero(x) : x) for x in a]
+nan2missing(a::AbstractArray) = [(isnan(x) ? missing : x) for x in a]
+
 function predict(det, ndets::Integer)
     t13 = read_theta13(ndets)
     livetime = t13[1, "livetime"] # days
@@ -50,13 +54,15 @@ end
 myzip(a) = @pipe zip(a...) |> map(collect, _)
 
 function sidebyside_data(ndets::AbstractArray=[6, 8, 7])
-    meas_rates, meas_errs = ibd_rate.(1:8, Ref(ndets)) |> myzip
+    meas_rates, meas_errs =
+        @pipe ibd_rate.(1:8, Ref(ndets)) |> myzip
     rawpred = predict.(1:8, Ref(ndets))
-    wts = 1 ./ meas_errs.^2
-    scale = mean(meas_rates ./ rawpred, weights(wts))
+    wts = 1 ./ meas_errs.^2 |> nan2zero
+    scales = meas_rates ./ rawpred |> nan2zero
+    scale = mean(scales, weights(wts))
     pred_rates = scale .* rawpred
 
-    return DataFrame(pred_rates = pred_rates,
-                     meas_rates = meas_rates,
-                     meas_errs = meas_errs)
+    return DataFrame(pred_rates = pred_rates |> nan2missing,
+                     meas_rates = meas_rates |> nan2missing,
+                     meas_errs = meas_errs |> nan2missing)
 end
