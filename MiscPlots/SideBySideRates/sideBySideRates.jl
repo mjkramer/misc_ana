@@ -9,7 +9,12 @@ inf2zero(a::AbstractArray) = [(isinf(x) ? zero(x) : x) for x in a]
 nan2zero(a::AbstractArray) = [(isnan(x) ? zero(x) : x) for x in a]
 nan2missing(a::AbstractArray) = [(isnan(x) ? missing : x) for x in a]
 
-function predict(det, ndets::Integer)
+function masscorr(det)
+    tm = read_theta13(8).target_mass
+    return tm[det] / tm[1]
+end
+
+function predict_full(det, ndets::Integer)
     t13 = read_theta13(ndets)
     livetime = t13[1, "livetime"] # days
 
@@ -26,20 +31,29 @@ function predict(det, ndets::Integer)
         return sum(predspec)
     end
 
-    return sum(pred(c) for c in cores)
+    return masscorr(det) * sum(pred(c) for c in cores)
 end
 
-function predict(det, ndets::AbstractArray=[6, 8, 7])
+function predict_full(det, ndets::AbstractArray=[6, 8, 7])
     livetimes = [read_theta13(ndet)[det, "livetime"]
                  for ndet in ndets]
     wts = livetimes ./ sum(livetimes)
-    rates = [predict(det, ndet) for ndet in ndets]
+    rates = [predict_full(det, ndet) for ndet in ndets]
     return sum(rates .* wts)
 end
 
+function predict_simple(det, a...)
+    bl = read_baselines()
+    cores = names(bl)[2:end]
+
+    return masscorr(det) * sum(1/bl[det, core]^2 for core in cores)
+end
+
+predict(a...; kw...) = predict_simple(a...; kw...)
+
 function ibd_rate(det, ndets::AbstractArray=[6, 8, 7])
     t13 = read_theta13.(ndets)
-    rates, stats, systs = zip(ibd_rate.(t13, det)...)
+    rates, stats, systs = zip(ibd_rate.(t13, det, corrmass=false)...)
 
     livetimes = [t[det, "livetime"] for t in t13]
     wts = livetimes ./ sum(livetimes)
@@ -56,7 +70,8 @@ myzip(a) = @pipe zip(a...) |> map(collect, _)
 function sidebyside_data(ndets::AbstractArray=[6, 8, 7])
     meas_rates, meas_errs =
         @pipe ibd_rate.(1:8, Ref(ndets)) |> myzip
-    rawpred = predict.(1:8, Ref(ndets))
+    # rawpred = predict.(1:8, Ref(ndets))
+    rawpred = predict_simple.(1:8, Ref(ndets))
     wts = 1 ./ meas_errs.^2 |> nan2zero
     scales = meas_rates ./ rawpred |> nan2zero
     scale = mean(scales, weights(wts))
@@ -103,9 +118,9 @@ function plot_lianghong()
 
     xpred_hack = [0.5, eachindex(labels)..., length(labels)+0.5]
     ypred_hack = [ypred[1], ypred..., ypred[end]]
-    plot(xpred_hack, ypred_hack, st=:stepmid, ls=:dash, c=:red, label="Observed")
+    plot(xpred_hack, ypred_hack, st=:stepmid, ls=:dash, c=:red, label="Expected")
 
-    scatter!(ymeas, yerror=ymeas_err, xerror=0.5, c=:black, label="Expected")
+    scatter!(ymeas, yerror=ymeas_err, xerror=0.5, c=:black, label="Observed")
     vline!([1.5, 2.5, 5.5], ls=:dash, c=:black, label=nothing)
     xticks!(eachindex(labels), labels)
     ylabel!("Ratio of IBD rates")

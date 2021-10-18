@@ -5,11 +5,11 @@ using Printf
 inf2zero(x) = isinf(x) ? zero(x) : x
 
 # See SideBySideRates/sideBySideRates.jl for summing over data periods
-function ibd_rate(df, AD)
+function ibd_rate(df, AD; corrmass=true)
     # NB: LBNL analysis does not treat target mass uncertainty
 
     r = df[AD, :]
-    massCorr = df[1, :target_mass] / r.target_mass
+    massCorr = corrmass ? df[1, :target_mass] / r.target_mass : 1.
     denom = r.livetime * r.veto_eff * r.mult_eff
     k = massCorr / denom |> inf2zero
 
