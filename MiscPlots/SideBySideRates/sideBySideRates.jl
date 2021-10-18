@@ -2,6 +2,7 @@ include("../dumpBigTable.jl")   # read_theta13
 include("oscProb.jl")
 include("readers.jl")
 
+using Pipe: @pipe
 using StatsBase
 
 function predict(det, ndets::Integer)
@@ -44,4 +45,18 @@ function ibd_rate(det, ndets::AbstractArray=[6, 8, 7])
     syst = systs .* wts |> sum
     err = sqrt(stat^2 + syst^2)
     return rate, err
+end
+
+myzip(a) = @pipe zip(a...) |> map(collect, _)
+
+function sidebyside_data(ndets::AbstractArray=[6, 8, 7])
+    meas_rates, meas_errs = ibd_rate.(1:8, Ref(ndets)) |> myzip
+    rawpred = predict.(1:8, Ref(ndets))
+    wts = 1 ./ meas_errs.^2
+    scale = mean(meas_rates ./ rawpred, weights(wts))
+    pred_rates = scale .* rawpred
+
+    return DataFrame(pred_rates = pred_rates,
+                     meas_rates = meas_rates,
+                     meas_errs = meas_errs)
 end
