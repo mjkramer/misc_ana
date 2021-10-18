@@ -2,11 +2,13 @@ include("../dumpBigTable.jl")   # read_theta13
 include("oscProb.jl")
 include("readers.jl")
 
-function predict(det, ndet::Integer)
-    t13 = read_theta13(ndet)
+using StatsBase
+
+function predict(det, ndets::Integer)
+    t13 = read_theta13(ndets)
     livetime = t13[1, "livetime"] # days
 
-    spec = read_reac_spec(ndet)
+    spec = read_reac_spec(ndets)
     xsec = read_xsec()
     df = innerjoin(spec, xsec, on="Enu")
 
@@ -25,8 +27,9 @@ end
 function predict(det, ndets::AbstractArray=[6, 8, 7])
     livetimes = [read_theta13(ndet)[det, "livetime"]
                  for ndet in ndets]
+    wts = livetimes ./ sum(livetimes)
     rates = [predict(det, ndet) for ndet in ndets]
-    return livetimes .* rates ./ sum(livetimes)
+    return sum(rates .* wts)
 end
 
 function ibd_rate(det, ndets::AbstractArray=[6, 8, 7])
@@ -34,12 +37,11 @@ function ibd_rate(det, ndets::AbstractArray=[6, 8, 7])
     rates, stats, systs = zip(ibd_rate.(t13, det)...)
 
     livetimes = [t[det, "livetime"] for t in t13]
-    tottime = sum(livetimes)
-    weights = livetimes ./ tottime
+    wts = livetimes ./ sum(livetimes)
 
-    rate = sum(rates .* weights)
-    stat = (stats .* weights).^2 |> sum |> sqrt
-    syst = systs .* weights |> sum
+    rate = sum(rates .* wts)
+    stat = (stats .* wts).^2 |> sum |> sqrt
+    syst = systs .* wts |> sum
     err = sqrt(stat^2 + syst^2)
     return rate, err
 end
