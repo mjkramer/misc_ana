@@ -87,13 +87,8 @@ function sidebyside_data(ndets::AbstractArray, tagconfig)
                      meas_errs = meas_errs |> nan2missing)
 end
 
-function plot_lianghong(dataset="P17B")
-    labels = ["AD1/AD2", "AD3/AD8", "AD4/EH3", "AD5/EH3", "AD6/EH3",
-              "AD4/EH3", "AD5/EH3", "AD6/EH3", "AD7/EH3"]
-
-    tagconfig = DATASETS[dataset]
-
-    df68, df78, df6 = sidebyside_data.([[6, 8], [7, 8], [6]], tagconfig)
+function plot_ratios(dataset, desc, labels, divs)
+    plot(reuse=false)
 
     function getvals(df, plotdets, normdets)
         pred_simple_norm = mean(df.pred_simple[normdets])
@@ -116,12 +111,7 @@ function plot_lianghong(dataset="P17B")
         # return map(unwrap, (pred_wrap, meas_wrap, meas_err_wrap))
     end
 
-    ypred_simple, ypred_full, ymeas, ymeas_err =
-        build([(df68, [1], [2]),
-               (df78, [3], [4]),
-               (df6, [5, 6, 7], [5, 6, 7]),
-               (df78, [5, 6, 7, 8], [5, 6, 7, 8])
-               ])
+    ypred_simple, ypred_full, ymeas, ymeas_err = build(desc)
 
     xpred_hack = [0.5, eachindex(labels)..., length(labels)+0.5]
     ypred_simple_hack = [ypred_simple[1], ypred_simple..., ypred_simple[end]]
@@ -130,8 +120,45 @@ function plot_lianghong(dataset="P17B")
     plot!(xpred_hack, ypred_full_hack, st=:stepmid, ls=:dash, c=:blue, label="Pred. (full)")
 
     scatter!(ymeas, yerror=ymeas_err, xerror=0.5, c=:black, label="Observed")
-    vline!([1.5, 2.5, 5.5], ls=:dash, c=:black, label=nothing)
+    vline!(divs, ls=:dash, c=:black, label=nothing)
     xticks!(eachindex(labels), labels)
     ylabel!("Ratio of IBD rates")
     title!("Relative IBD rates ($dataset)")
+    display(current())
+end
+
+function plot_ratios_full(dataset)
+    labels = ["AD1/AD2", "AD3/AD8", "AD4/EH3", "AD5/EH3", "AD6/EH3",
+              "AD4/EH3", "AD5/EH3", "AD6/EH3", "AD7/EH3"]
+
+    df68, df78, df6 = sidebyside_data.([[6, 8], [7, 8], [6]],
+                                       DATASETS[dataset])
+
+    desc = [(df68, [1], [2]),
+            (df78, [3], [4]),
+            (df6, [5, 6, 7], [5, 6, 7]),
+            (df78, [5, 6, 7, 8], [5, 6, 7, 8])]
+
+    divs = [1.5, 2.5, 5.5]
+
+    plot_ratios(dataset, desc, labels, divs)
+end
+
+function plot_ratios_7ad(dataset)
+    labels = ["AD3/AD8", "AD4/EH3", "AD5/EH3", "AD6/EH3", "AD7/EH3"]
+
+    df = sidebyside_data([7], DATASETS[dataset])
+
+    desc = [(df, [3], [4]),
+            (df, [5, 6, 7, 8], [5, 6, 7, 8])]
+
+    divs = [1.5]
+
+    plot_ratios(dataset, desc, labels, divs)
+end
+
+function plot_all_ratios()
+    plot_ratios_full("P17B")
+    plot_ratios_full("All data")
+    plot_ratios_7ad("Post-P17B")
 end
