@@ -1,3 +1,5 @@
+include("../dumpBigTable.jl")   # read_theta13
+
 using CSV
 using DataFrames
 using Memoization
@@ -30,8 +32,8 @@ end
     sort!(df, :det)
 end
 
-@memoize function read_theta13(ndet::Int)
-    path = "fit_input/2021_02_03@delcut_third_6.000MeV@bcw/Theta13-inputs_P17B_inclusive_$(ndet)ad.txt"
+@memoize function read_theta13(ndet::Int, tagconfig)
+    path = "fit_input/$tagconfig/Theta13-inputs_P17B_inclusive_$(ndet)ad.txt"
     return read_theta13(path)
 end
 
