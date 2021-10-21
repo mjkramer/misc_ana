@@ -5,9 +5,18 @@ using Roots: fzero
 using StatsBase
 using Statistics
 using ThreadTools
+using QuadGK
 
 pyplot()
 
+# Formulas from Vogel-Beacom 1999
+
+# Wei xtra: alpha, phase factor, neutron lifetime
+# Our xtra: GF, ΔR
+
+# Constants taken from PDG 2011 unless otherwise noted.
+ħ = 6.58211899e-22              # MeV s
+ħc = 197.3269631                # MeV fm
 me = 0.511                      # MeV
 Mn = 939.565                    # MeV
 Mp = 938.272                    # MeV
@@ -16,11 +25,18 @@ fV = 1
 gA = 1.2701
 f2 = 3.70589
 cosθc = 0.974
-ΔR = 0.024
+ΔR = 0.024  # Hardy and Towner, AIP Conf. Proc. 481, 129 (1999), 10.1063/1.59543
+# The remaining constants are only used in σtot0_alt
+fR = 1.7152                     # Phase space factor, Vogel-Beacom
+τn = 881.5 / ħ                  # Neutron mass, MeV
 
 M = (Mn + Mp) /2
 Δ = Mn - Mp
 y = √((Δ^2 - me^2)/2)
+
+fm2cm = 1e-13
+σ0 = fm2cm^2 * 1/π * ħc^2 * GF^2 * cosθc^2 * (1 + ΔR)
+
 
 function kinematics(cosθ, Eν)
     p(E) = √(E^2 - me^2)
@@ -49,8 +65,6 @@ function dσ_dcosθ(cosθ, Eν)
          + (fV^2 + 3gA^2)*((Ee0 + Δ)*(1 - cosθ/ve0) - Δ)
          + (fV^2 - gA^2)*((Ee0 + Δ)*(1 - cosθ/ve0) - Δ)*ve0*cosθ)
 
-    σ0 = (GF^2 * cosθc^2) / π * (1 + ΔR)
-
     return (σ0/2*((fV^2 + 3gA^2) + (fV^2 - gA^2)ve1*cosθ)Ee1*pe1
             - σ0/2*(Γ/M)*Ee0*pe0)
 end
@@ -62,6 +76,25 @@ function dσ_dEe(Ee, Eν)
 end
 
 # dP / dE = dP / dcosθ * dcosθ / dE
+
+function σ_tot(Eν)
+    if Eν == 1.8
+        return 0.0
+    end
+    quadgk(cθ -> dσ_dcosθ(cθ, Eν), -1, 1, rtol=1e-7)[1]
+end
+
+function σ_tot0(Eν)
+    Ee0 = Eν - Δ
+    pe0 = √(Ee0^2 - me^2)
+    σ0 * (fV^2 + 3gA^2) * Ee0 * pe0
+end
+
+function σ_tot0_alt(Eν)
+    Ee0 = Eν - Δ
+    pe0 = √(Ee0^2 - me^2)
+    fm2cm^2 * ħc^2 * (2π^2 / me^5) / (fR * τn) * Ee0 * pe0
+end
 
 # cosθspace() = range(-1, 1, length=1001)
 cosθspace() = range(-1, 1, length=101) |> collect
