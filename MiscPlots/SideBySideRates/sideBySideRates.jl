@@ -25,8 +25,8 @@ function predict_simple(det)
 end
 
 function masscorr(det)
-    dataset = first(DATASETS)[2] # all datasets have the same target masses
-    tm = read_theta13(8, dataset).target_mass
+    tagconfig = first(DATASETS)[2] # all datasets have the same target masses
+    tm = read_theta13(8, tagconfig).target_mass
     return tm[det] / tm[1]
 end
 
@@ -144,10 +144,10 @@ function plot_ratios_full(dataset)
     plot_ratios(dataset, desc, labels, divs)
 end
 
-function plot_ratios_7ad(dataset)
+function plot_ratios_zoom(dataset)
     labels = ["AD3/AD8", "AD4/EH3", "AD5/EH3", "AD6/EH3", "AD7/EH3"]
 
-    df = sidebyside_data([7], DATASETS[dataset])
+    df = sidebyside_data([7, 8], DATASETS[dataset])
 
     desc = [(df, [3], [4]),
             (df, [5, 6, 7, 8], [5, 6, 7, 8])]
@@ -159,6 +159,7 @@ end
 
 function plot_all_ratios()
     plot_ratios_full("P17B")
-    plot_ratios_full("All data")
-    plot_ratios_7ad("Post-P17B")
+    plot_ratios_zoom("All data")
+    plot_ratios_zoom("Post-P17B")
+    plot_ratios_zoom("P17B")
 end
