@@ -30,16 +30,6 @@ function compare_σ_to_Wei()
          ylim=(0, 1.15e-41), yticks=0:1e-42:1e-41)
 end
 
-function compare_2011_to_2021()
-    Eν = 1.81:0.01:12
-    σ_2011 = σ_tot.(Eν)
-    σ_2021 = σ_tot_2021.(Eν)
-
-    plot(Eν, [σ_2011 σ_2021], labels=["PDG 2011" "PDG 2021"],
-         legend=:topleft,
-         ylim=(0, 1.15e-41), yticks=0:1e-42:1e-41)
-end
-
 function compare_all()
     weifile = ENV["LBNL_FIT_HOME"] * "/toySpectra/reactor/Xsec1_2011.dat"
     df_wei = CSV.read(weifile, DataFrame,
