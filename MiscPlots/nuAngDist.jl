@@ -11,19 +11,17 @@ pyplot()
 
 # Formulas from Vogel-Beacom 1999
 
-# Wei xtra: alpha, phase factor, neutron lifetime
-# Our xtra: GF, ΔR
-
-# Constants taken from PDG 2011 unless otherwise noted.
+# From PDG 2011 unless otherwise noted.
 ħ = 6.58211899e-22              # MeV s
 ħc = 197.3269631                # MeV fm
-me = 0.511                      # MeV
-Mn = 939.565                    # MeV
-Mp = 938.272                    # MeV
-GF = 1.16637e-11                # MeV-2
-fV = 1
-gA = 1.2701
-f2 = 3.70589
+me = 0.51099891                 # MeV
+Mn = 939.565345                 # MeV
+Mp = 938.272013                 # MeV
+GF = 1.16637e-11                # MeV-2 ħc3
+fV = 1                          # Vogel-Beacom "f"
+gA = 1.2701                     # Vogel-Beacom "g"
+# f2 should be 4.70589???
+f2 = 3.70589                    # μ_p - μ_n (in units of nuclear magneton)
 cosθc = 0.974
 ΔR = 0.024  # Hardy and Towner, AIP Conf. Proc. 481, 129 (1999), 10.1063/1.59543
 # The remaining constants are only used in σtot0_alt
