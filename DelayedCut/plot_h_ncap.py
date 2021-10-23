@@ -126,20 +126,36 @@ def overlay_h_ncap():
                 idt = idet(site, det)
                 if hists[idt] is None:
                     hists[idt] = keep(h_ncap_sub.Clone(f"h_AD{det}"))
+                    hists[idt].SetTitle(f"EH{site}-AD{det}")
                     print(hists[idt])
                 else:
                     hists[idt].Add(h_ncap_sub)
 
     for i, h in enumerate(hists):
         h.SetLineColor(colors[i])
-        h.Scale(1/h.Integral())
-        opt = " same" if i != 0 else ""
-        h.Draw("hist" + opt)
+        h.Scale(1 / h.Integral())
+        if i == 0:
+            # t0 = h.GetTitle()
+            # h.SetTitle("N-capture spectrum (full dataset)")  # whole-plot title
+            h.SetXTitle("Energy (MeV)")
+            h.SetYTitle("Events / 5 keV")
+            h.Draw("hist")
+            # h.SetTitle(t0)      # for legend
+        else:
+            h.Draw("hist same")
 
-    R.gPad.BuildLegend()
+    leg = keep(R.gPad.BuildLegend())
+    leg.SetX1(10.5); leg.SetX2(11.8); leg.SetY1(-3.5); leg.SetY2(-1.2)
+    hists[0].SetTitle("N-capture spectrum (full dataset)")
     R.gPad.SetLogy()
-    R.gPad.SaveAs("gfx/overlay_h_ncap.png")
-
+    R.gPad.Modified()
+    R.gPad.Update()
+    title = R.gPad.GetListOfPrimitives().FindObject("title")
+    title.SetX1(5.8); title.SetX2(10.2); title.SetY1(-0.9); title.SetY2(-0.5)
+    R.gPad.Modified()
+    R.gPad.Update()
+    R.gPad.SaveAs("gfx/overlay_h_ncap.pdf")
+    return leg
 
 
 if __name__ == '__main__':
