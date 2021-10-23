@@ -29,7 +29,7 @@ def get_h_ncap(nADs, site, det):
     f = R.TFile(stage2_file(nADs, site))
     R.gROOT.cd()
     hname = f"h_ncap_{nADs}ad_eh{site}_ad{det}"
-    htitle = f"N-capture spectrum, EH{site}-AD{det} ({nADs}AD)"
+    htitle = f"Neutron-capture spectrum, EH{site}-AD{det} ({nADs}AD)"
     h_ncap = keep(R.TH1F(hname, htitle, 160, 4, 12))
     tree = f.Get(f"ibd_AD{det}")
     tree.Draw(f"eD>>{hname}", "", "goff")
@@ -66,6 +66,9 @@ def plot_h_ncap(nADs, site, det, log=False):
 
     h_ncap, h_sing, h_ncap_sub = get_h_ncap(nADs, site, det)
 
+    h_ncap.SetXTitle("Energy (MeV)")
+    h_ncap.SetYTitle("Events / 5 keV")
+
     h_ncap.SetLineColor(R.kBlue)
     h_sing.SetLineColor(R.kRed)
     h_ncap_sub.SetLineColor(R.kMagenta)
@@ -78,9 +81,9 @@ def plot_h_ncap(nADs, site, det, log=False):
     h_ncap_sub.Draw("hist same")
 
     oldtitle = h_ncap.GetTitle()
-    h_ncap.SetTitle("raw")
-    h_sing.SetTitle("acc")
-    h_ncap_sub.SetTitle("raw - acc")
+    h_ncap.SetTitle("Raw")
+    h_sing.SetTitle("Accidentals")
+    h_ncap_sub.SetTitle("Difference")
 
     if log:
         c.SetLogy()
@@ -145,13 +148,13 @@ def overlay_h_ncap():
             h.Draw("hist same")
 
     leg = keep(R.gPad.BuildLegend())
-    leg.SetX1(10.5); leg.SetX2(11.8); leg.SetY1(-3.5); leg.SetY2(-1.2)
-    hists[0].SetTitle("N-capture spectrum (full dataset)")
+    hists[0].SetTitle("Neutron-capture spectra (full dataset)")
     R.gPad.SetLogy()
     R.gPad.Modified()
     R.gPad.Update()
     title = R.gPad.GetListOfPrimitives().FindObject("title")
-    title.SetX1(5.8); title.SetX2(10.2); title.SetY1(-0.9); title.SetY2(-0.5)
+    title.SetX1(5.2); title.SetX2(10.8); # title.SetY1(-0.9); title.SetY2(-0.5)
+    leg.SetX1(10.5); leg.SetX2(11.8); leg.SetY1(-3.5); leg.SetY2(-1.2)
     R.gPad.Modified()
     R.gPad.Update()
     R.gPad.SaveAs("gfx/overlay_h_ncap.pdf")
