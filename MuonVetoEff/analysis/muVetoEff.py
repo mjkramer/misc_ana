@@ -19,7 +19,9 @@ except:
     pass
 
 # shower muon PE
-CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
+# CUTS = np.arange(1.8e5, 5.001e5, 0.1e5)
+CUTS = np.arange(1.8e5, 4.40001e5, 0.2e5)
+TIMES = np.arange(0.250, 1.8750001, 0.125)
 
 
 @lru_cache()
@@ -80,19 +82,23 @@ def scale_unc(site, det, showerCut, showerTime):
     return new_unc
 
 def plot2d(func, fname, title, **kwargs):
-    times = np.arange(0.1, 2.01, 0.1)
+    # times = np.arange(0.1, 2.01, 0.1)
 
     vals = [[func(cut, time) for cut in CUTS]
-            for time in times]
+            for time in TIMES]
 
     plt.figure()
-    plt.pcolormesh(CUTS, times, vals, shading='nearest', **kwargs)
+    plt.pcolormesh(CUTS, TIMES, vals, shading='nearest', **kwargs)
+    plt.xticks(CUTS[::2])
+    plt.yticks(TIMES)
+    plt.plot(3e5, 0.375, "P", markerfacecolor="red", markeredgecolor="red", ms=8)
+    plt.plot(4e5, 1, "X", markerfacecolor="darkorange", markeredgecolor="darkorange", ms=8)
     plt.colorbar()
     plt.title(title)
     plt.xlabel("Shower muon definition [p. e.]")
     plt.ylabel("Shower veto time [s]")
     plt.tight_layout()
-    plt.savefig(f"gfx/{fname}.png")
+    plt.savefig(f"gfx/{fname}.pdf")
 
 def plot_vetoEff(site, det):
     def f(cut, time):
@@ -129,7 +135,7 @@ def plot_unc(site, det, **kwargs):
 def plot_li9_linreg(site):
     def f(cut, time):
         return li9_linreg(site, cut, time)
-    return plot2d(f, f"li9_linreg_eh{site}", f"Li9 daily rate, EH{site}")
+    return plot2d(f, f"li9_linreg_eh{site}", f"Li9 rate (/AD/day), EH{site}")
 
 # garbage
 def li9_quick(site, cut, time_s):

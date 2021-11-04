@@ -61,8 +61,13 @@ def dump_quantity(study, rowname, nADs=8):
 
     for direc in glob(f"fit_results/{study}/*"):
         parts = os.path.basename(direc).split("_")
-        cut_pe = float(parts[-2][:-2])
-        time_s = float(parts[-1][:-1])
+        if parts[0] == "showerPE":  # SuperVariator
+            assert parts[2] == "showerSec"
+            cut_pe = float(parts[1])
+            time_s = float(parts[3])
+        else:
+            cut_pe = float(parts[-2][:-2])
+            time_s = float(parts[-1][:-1])
 
         t13_file = f"{direc}/Theta13-inputs_P17B_inclusive_{nADs}ad.txt"
         t13_data = read_theta13_file(t13_file)
