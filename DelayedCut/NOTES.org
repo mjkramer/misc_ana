@@ -1,0 +1,39 @@
+delcut_second: Uses relative delayed efficiencies, not absolute
+
+What is the difference between delcut_second and delcut_second_v2?
+
+Hypothesis: v2 has the uncommitted changes to Spectrum.C and the commenting-out in copy_toy_prompt_spec.py
+
+Let's use 4 MeV to try to recover what the fuck we did.
+
+Did I do "--use-data" for delcut_second_toymc??? Doesn't look like it. Junk code and eprompt spectra comparisons look OK.
+
+Git revisions?
+delcut_second: misc_ana @ 0f2570c, Fitter @ 7cadf37
+delcut_second_v2: misc_ana @ 85a6214, Fitter @ a3c41ec
+
+- [ ] Make fit_prep dump the vertex and delayed efficiencies to aux files
+- [ ] Run fit_prep again
+- [ ] Copy the aux files to fit_results
+- [ ] Generate the plots below
+
+* Plots we want
+** Plot 0
+Fit results for the nine cases
+** Plot 1
+- Note: 2x2 canvas, one plot per data period plus livetime-weighted sum
+*** Dashed line: Vertex cut efficiency
+*** Points: Ratio of zTopThird@flat to fullDet for:
+- Raw spectrum integral (ibd_eprompt...)
+- Corrected spectrum integral (CorrIbdEvts...)
+** Plot 2
+Like plot 1, but zBotThird
+** Plot 3
+*** Dashed line: Delayed cut efficiency
+*** Points: Ratio of fullDet@abs to fullDet@flat for:
+- Raw spectrum integral (ibd_eprompt...)
+- Corrected spectrum integral (CorrIbdEvts...)
+** Plot 4
+Like plot 3, but zBotThird
+** Plots 5 & 6
+Like 3 and 4, but rel instead of abs

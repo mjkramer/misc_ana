@@ -105,11 +105,15 @@ def read_fit_file(fname):
 def read_study(study):
     data = []
     for direc in sorted(glob(f"data/fit_results/{study}/*")):
-        print(direc)
+        # print(direc)
         fit_result = read_fit_file(f"{direc}/fit_shape_2d.root")
         title = {"title": os.path.basename(direc)}
         data.append({**title, **asdict(fit_result)})
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    for qty in ["s2t", "dm2"]:
+        df[f"{qty}_mid"] = 0.5 * \
+            (df[f"{qty}_min1sigma"] + df[f"{qty}_max1sigma"])
+    return df
 
 
 def read_csv(csvfile):

@@ -12,7 +12,7 @@ from prod_io import LockfileListReader, LockfileListWriter
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("listfile")
-    ap.add_argument("tag")
+    ap.add_argument("jobname")
     ap.add_argument("--toy-opts", default="")
     args = ap.parse_args()
 
@@ -31,9 +31,9 @@ def main():
 
             template_dir, cut_mev, *rest = line.strip().split()
             if rest:
-                outdirname = f"{args.tag}/{rest[0]}"
+                outdirname = f"{args.jobname}/{rest[0]}"
             else:
-                outdirname = f"{args.tag}/{cut_mev}MeV"
+                outdirname = f"{args.jobname}/{cut_mev}MeV"
             os.system(f"./run_fitter.py {template_dir} {outdirname} " +
                       f"--cut-mev {cut_mev} {args.toy_opts}")
             writer.log(line)

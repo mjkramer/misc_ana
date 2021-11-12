@@ -33,12 +33,14 @@ def full_df(study, ident, nADs):
 def savefig(fig, category, study, fname):
     direc = f"gfx/{category}/{study}"
     os.system(f"mkdir -p {direc}")
-    for ext in ["png"]:
+    for ext in ["pdf"]:
         fig.savefig(f"{direc}/{fname}.{ext}")
 
 
 def plot_labeled_fits(study, qty, title, best_or_mid="best",
-                      save=True, **kw):
+                      save=True, suffix="", xlabel=None, **kw):
+    plt.figure()
+
     df = pd.read_csv(f"summaries/{study}.csv", index_col=0)
     if best_or_mid == "mid":
         expr = f"0.5 * ({qty}_min1sigma + {qty}_max1sigma)"
@@ -58,8 +60,12 @@ def plot_labeled_fits(study, qty, title, best_or_mid="best",
     # fig, ax = plt.subplots()
     plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o", **kw)
     # plt.gca().set_xticklabels(plt.gca().get_xticklabels(), rotation=45)
+    plt.ylabel(r"$\sin^2 2\theta_{13}$" if qty == "s2t"
+               else r"$\Delta m^2_{ee}$")
+    if xlabel:
+        plt.xlabel(xlabel)
 
-    plt.title(title)
+    plt.title(title + suffix)
     plt.tight_layout()
 
     if save:
@@ -69,33 +75,36 @@ def plot_labeled_fits(study, qty, title, best_or_mid="best",
 
 def plot_labeled_s2t_best(study, **kw):
     return plot_labeled_fits(study, "s2t",
-                             r"$\sin^2 2\theta_{13}$ (best fit)",
+                             # r"$\sin^2 2\theta_{13}$ (best fit)",
+                             r"$\sin^2 2\theta_{13}$",
                              "best", **kw)
 
 
 def plot_labeled_s2t_mid(study, **kw):
     return plot_labeled_fits(study, "s2t",
-                             r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)",
+                             # r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)",
+                             r"$\sin^2 2\theta_{13}$",
                              "mid", **kw)
 
 
 def plot_labeled_dm2_best(study, **kw):
     return plot_labeled_fits(study, "dm2",
-                             r"$\Delta m^2_{ee}$ (best fit)",
+                             # r"$\Delta m^2_{ee}$ (best fit)",
+                             r"$\Delta m^2_{ee}$",
                              "best", **kw)
-
 
 def plot_labeled_dm2_mid(study, **kw):
     return plot_labeled_fits(study, "dm2",
-                             r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)",
+                             # r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)",
+                             r"$\Delta m^2_{ee}$",
                              "mid", **kw)
 
 
-def plot_labeled_fits_all(study):
-    plot_labeled_s2t_best(study)
-    plot_labeled_s2t_mid(study)
-    plot_labeled_dm2_best(study)
-    plot_labeled_dm2_mid(study)
+def plot_labeled_fits_all(study, **kw):
+    plot_labeled_s2t_best(study, **kw)
+    plot_labeled_s2t_mid(study, **kw)
+    plot_labeled_dm2_best(study, **kw)
+    plot_labeled_dm2_mid(study, **kw)
 
 
 def plot_ratio(study="test_newDelEff", ident="zTopThird@flat", nADs=8):

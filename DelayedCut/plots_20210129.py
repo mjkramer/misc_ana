@@ -279,12 +279,17 @@ def plot_input(studies, key, key_err=None, **kwargs):
                 _, yerr = get(key_err)
             ax.errorbar(xs, ys, yerr=yerr,
                         label=study, fmt="o")
-        ax.legend()
-        ax.set_xlabel("Delayed min energy [MeV]")
+        if len(studies) > 1:
+            ax.legend()
+        ax.set_xlabel("Minimum delayed energy (MeV)")
         ax.set_title(f"{key} (EH{hall})")
+        # HACK for thesis
+        if key == "acc_bkg":
+            ax.set_title(f"Accidental background rate vs. minimum delayed energy (EH{hall})")
+            ax.set_ylabel("Accidentals / day / AD")
 
     name = "+".join(studies)
-    save(fig, f"gfx/input/{name}/{key}.png")
+    save(fig, f"gfx/input/{name}/{key}.pdf")
 
 
 def plot_input_ratio(studies, key, key_err=None, **kwargs):

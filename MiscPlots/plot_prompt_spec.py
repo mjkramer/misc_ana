@@ -19,7 +19,7 @@ def plot_prompt_spec(tag="2021_02_03", config="delcut_fourth_6.000MeV"):
 
     for hall in [1, 2, 3]:
         hname = f"h_prompt_eh{hall}"
-        htitle = f"Raw prompt spectrum, EH{hall}"
+        htitle = f"Prompt spectrum, EH{hall}"
         h = keep(R.TH1F(hname, htitle, 240, 0, 12))
         h.SetXTitle("MeV")
 

@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -6,6 +7,9 @@ import pandas as pd
 from root_pandas import read_root
 
 from util import dets_for_stage2_file
+
+
+BOUNDARIES = [2631, 2869]       # p19a/p20a/p21a
 
 
 class DqPlotter:
@@ -47,6 +51,7 @@ class DqPlotter:
             self.df_peaks[peak] = df_vals.join(df_errs)
 
     def do_plot(self, yss, title, tag, yerrs=None):
+        print(title)
         fig, axes = plt.subplots(2, 1, sharex=True,
                                  gridspec_kw={"height_ratios": [3, 1]})
 
@@ -59,6 +64,9 @@ class DqPlotter:
             axes[0].errorbar(yss[i].index, yss[i], yerr=yerr, fmt="o",
                              ms=markersize, label=f"AD{det}")
             yss[i].to_csv(f"{self.gfx_dir}/data/{tag}.eh{self.hall}.ad{det}.csv")
+
+        for b in BOUNDARIES:
+            axes[0].axvline(b, linestyle="--", color="black")
 
         axes[0].set_title(f"{title} (EH{self.hall})")
         axes[0].legend()
@@ -179,3 +187,49 @@ class DqPlotter:
     def plot_tl208(self):
         yss, yerrs = self.peak_fits("tl208")
         return self.do_plot(yss, "Tl208 peak", "tl208", yerrs=yerrs)
+
+
+# def main():
+def main(tagconfig):
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("tagconfig", help="tag@config")
+    # args = ap.parse_args()
+
+    from collections import namedtuple
+    Args = namedtuple("Args", ["tagconfig"])
+    args = Args(tagconfig)
+
+    home = os.environ["IBDSEL_HOME"]
+    base = f"{home}/../data/stage2_pbp/{args.tagconfig}"
+
+    plotters = []
+
+    for hall in [1, 2, 3]:
+        print(hall)
+        s2_path = f"{base}/stage2.pbp.eh{hall}.7ad.root"
+        drl_file = os.environ["IBDSEL_DRL_PATH"]
+        fits_dir = f"data/fits.{args.tagconfig}"
+        gfx_dir = f"gfx/{args.tagconfig}"
+
+        plotter = DqPlotter(s2_path, drl_file, fits_dir, gfx_dir)
+        print("got")
+        plotters.append(plotter)
+        # plotter.plot_veto_eff()
+        # plotter.plot_dmc_eff()
+        # plotter.plot_acc_rate()
+        # plotter.plot_preMuon_rate()
+        # plotter.plot_promptLike_rate()
+        # plotter.plot_delayedLike_rate()
+        # plotter.plot_plusLike_rate()
+        # plotter.plot_ibd_dt()
+        # plotter.plot_ibd_ePrompt()
+        # plotter.plot_ibd_eDelayed()
+        # plotter.plot_ibd_rate()
+        # plotter.plot_k40()
+        # plotter.plot_tl208()
+
+    return plotters
+
+
+if __name__ == '__main__':
+    main()

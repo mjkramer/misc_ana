@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 from functools import lru_cache
 from glob import glob
+import math
 import os
 
 import matplotlib.pyplot as plt
@@ -17,9 +18,26 @@ except Exception:
 
 # HACK
 class MyScalarFormatter(matplotlib.ticker.ScalarFormatter):
-    def __init__(self, offset_format="%g", *a, **kw):
-        self.offset_format = offset_format
+    def __init__(self, offset_decimals=3, *a, **kw):
+        self.offset_decimals = offset_decimals
         matplotlib.ticker.ScalarFormatter.__init__(self, *a, **kw)
+
+    def format_offset(self, value):
+        # docstring inherited
+        e = math.floor(math.log10(abs(value)))
+        s = round(value / 10**e, 10)
+        exponent = self._format_maybe_minus_and_locale("%d", e)
+        significand = self._format_maybe_minus_and_locale(
+            # "%d" if s % 1 == 0 else "%1.10f", s)
+            "%d" if s % 1 == 0 else f"%1.{self.offset_decimals}f", s)
+        if e == 0:
+            return significand
+        elif self._useMathText or self._usetex:
+            exponent = "10^{%s}" % exponent
+            return (exponent if s == 1  # reformat 1x10^y as 10^y
+                    else rf"{significand} \times {exponent}")
+        else:
+            return f"{significand}e{exponent}"
 
     def get_offset(self):
         """
@@ -32,15 +50,18 @@ class MyScalarFormatter(matplotlib.ticker.ScalarFormatter):
             offsetStr = ''
             sciNotStr = ''
             if self.offset:
-                # my change here
                 # offsetStr = self.format_data(self.offset)
+
+                # my old version here
                 # another hack, sigh. want e+3, not e+03.
                 # if self.offset_format.endswith("e"):
                 #     ndecimals = int(self.offset_format[-2])
+                # offsetStr = self.offset_format % self.offset
 
-                offsetStr = self.offset_format % self.offset
-                if self.offset > 0:
-                    offsetStr = '+' + offsetStr
+                print(self.offset)
+                offsetStr = self.format_offset(self.offset)
+                # if self.offset > 0:
+                #     offsetStr = '+' + offsetStr
             if self.orderOfMagnitude:
                 if self._usetex or self._useMathText:
                     sciNotStr = self.format_data(10 ** self.orderOfMagnitude)
@@ -51,7 +72,12 @@ class MyScalarFormatter(matplotlib.ticker.ScalarFormatter):
                     sciNotStr = r'\times\mathdefault{%s}' % sciNotStr
                 s = r'$%s\mathdefault{%s}$' % (sciNotStr, offsetStr)
             else:
-                s = ''.join((sciNotStr, offsetStr))
+                if self.offset:
+                    sep = " + " if self.offset > 0 else " - "
+                    s = sep.join((sciNotStr, offsetStr))
+                else:
+                    sep = ""
+                s = sep.join((sciNotStr, offsetStr))
 
         return self.fix_minus(s)
 
@@ -168,8 +194,8 @@ def read_csv(csvfile):
 
 # https://stackoverflow.com/questions/43525546/plotting-pcolormesh-from-filtered-pandas-dataframe-for-defined-x-y-ranges-even
 def plot2d(df, expr, title, name, tag,
-           title_extra=None, sciticks=False, mark_nom=True, mark_min=False,
-           relative=False, offset_format="%g",
+           title_extra=None, sciticks=True, mark_nom=True, mark_min=False,
+           relative=False, offset_decimals=3,
            **kwargs):
     df = df.copy()
     df["vals"] = df.eval(expr)
@@ -188,7 +214,7 @@ def plot2d(df, expr, title, name, tag,
         values = piv.values
     result = plt.pcolormesh(piv.columns, piv.index, values,
                             shading="nearest", **kwargs)
-    cbar = plt.colorbar(format=MyScalarFormatter(offset_format))
+    cbar = plt.colorbar(format=MyScalarFormatter(offset_decimals))
     if sciticks:
         print("sciticks")
         cbar.formatter.set_powerlimits((0, 0))
@@ -197,7 +223,7 @@ def plot2d(df, expr, title, name, tag,
         plt.plot(4e5, 1, "X", markerfacecolor="darkorange", markeredgecolor="darkorange", ms=8)
     if mark_min:
         min_t, min_E = piv.stack().idxmin()
-        plt.plot([min_E], [min_t], "w*", ms=8)
+        plt.plot([min_E], [min_t], "w*", ms=10)
     title_extra = f" ({title_extra})" if title_extra else ""
     if (title_extra == "") and relative:
         title_extra = " (frac. diff. from nominal)"
@@ -222,7 +248,7 @@ def _plot_results(df, tag, expr, title, name, is_data=True, **kwargs):
     if "vmax" in kwargs:
         ext += "_detail"
     return plot2d(df, expr, title + suffix, name + ext,
-                  tag, sciticks=is_data, **kwargs)
+                  tag, **kwargs)
 
 
 def plot_s2t_best(df, tag, **kwargs):
@@ -251,35 +277,38 @@ def plot_dm2_mid(df, tag, **kwargs):
     return _plot_results(df, tag, expr, title, "dm2_mid", **kwargs)
 
 
-def plot_s2t_unc(df, tag, is_data=True, **kwargs):
+def plot_s2t_unc(df, tag, **kwargs):
     expr = "0.5 * (s2t_max1sigma - s2t_min1sigma)"
     title = r"1$\sigma$ uncertainty on $\sin^2 2\theta_{13}$"
     return _plot_results(df, tag, expr, title, "s2t_unc", **kwargs)
 
 
-def plot_dm2_unc(df, tag, is_data=True, **kwargs):
+def plot_dm2_unc(df, tag, **kwargs):
     expr = "0.5 * (dm2_max1sigma - dm2_min1sigma)"
     title = r"1$\sigma$ uncertainty on $\Delta m^2_{ee}$"
     return _plot_results(df, tag, expr, title, "dm2_unc", **kwargs)
 
 
-def plot_all(tag, offset_formats=["%g", "%g"], **kwargs):
+def plot_all(tag, offset_decimals=[1, 3], **kwargs):
     df = read_csv(f"summaries/{tag}.csv")
     # plot_s2t_best(df, tag)
     # plot_dm2_best(df, tag)
     # plot_s2t_unc(df, tag)
     # plot_dm2_unc(df, tag)
-    plot_s2t_mid(df, tag, offset_format=offset_formats[0], **kwargs)
-    plot_dm2_mid(df, tag, offset_format=offset_formats[1], **kwargs)
+    plot_s2t_mid(df, tag, offset_decimals=offset_decimals[0], **kwargs)
+    plot_dm2_mid(df, tag, offset_decimals=offset_decimals[1], **kwargs)
 
 
-def plot_unc_all(tag, offset_formats=["%g", "%g"], detail=False, vmax=None, **kwargs):
+def plot_unc_all(tag, offset_decimals=[4, 4], detail=False, vmax=None, **kwargs):
+    kwargs.setdefault("mark_min", True)
     df = read_csv(f"summaries/{tag}.csv")
-    plot_s2t_unc(df, tag, offset_format=offset_formats[0], **kwargs)
-    plot_dm2_unc(df, tag, offset_format=offset_formats[1], **kwargs)
-    if vmax:                    # [0.0038, 0.0001]
-        plot_s2t_unc(df, tag, offset_format=offset_formats[0], vmax=vmax[0], **kwargs)
-        plot_dm2_unc(df, tag, offset_format=offset_formats[1], vmax=vmax[1], **kwargs)
+    kwargs_s2t = {"offset_decimals": offset_decimals[0], **kwargs}
+    kwargs_dm2 = {"offset_decimals": offset_decimals[1], **kwargs}
+    if vmax:
+        kwargs_s2t["vmax"] = vmax[0]
+        kwargs_dm2["vmax"] = vmax[1]
+    plot_s2t_unc(df, tag, **kwargs_s2t)
+    plot_dm2_unc(df, tag, **kwargs_dm2)
 
 
 def plot_all_all(**kwargs):

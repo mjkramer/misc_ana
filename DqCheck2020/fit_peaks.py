@@ -21,8 +21,8 @@ def singles_fit(h, emin, emax):
 
 
 class PeakFitter:
-    def __init__(self, tag, stage2_dbd_dir=DEFAULT_STAGE2_DIR):
-        self.tag = tag
+    def __init__(self, stage2_dbd_dir=DEFAULT_STAGE2_DIR):
+        self.tagconfig = os.path.basename(stage2_dbd_dir)
 
         # hall => day => det => h_singles
         self.hists = defaultdict(lambda: defaultdict(lambda: {}))
@@ -37,7 +37,7 @@ class PeakFitter:
                         self.hists[hall][day][det] = keep(h)
 
     def dump_fit(self, name, emin, emax):
-        fitdir = f"data/fits.{self.tag}"
+        fitdir = f"data/fits.{self.tagconfig}"
         os.system(f"mkdir -p {fitdir}")
         for hall in [1, 2, 3]:
             with open(f"{fitdir}/{name}.eh{hall}.csv", "w") as outf:
@@ -62,11 +62,10 @@ class PeakFitter:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("tag")
     ap.add_argument("stage2_dir")
     args = ap.parse_args()
 
-    pf = PeakFitter(args.tag, stage2_dbd_dir=args.stage2_dir)
+    pf = PeakFitter(stage2_dbd_dir=args.stage2_dir)
     pf.dump_fit("k40", 1.4, 1.5)
     pf.dump_fit("tl208", 2.6, 2.8)
 

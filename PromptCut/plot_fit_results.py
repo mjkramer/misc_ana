@@ -143,26 +143,32 @@ def plot_fit(df, qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
     ret = plt.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o")
 
     plt.title(title)
-    plt.xlabel("Prompt low cut [MeV]")
+    plt.xlabel("Minimum prompt energy (MeV)")
+    plt.ylabel(r"$\sin^2 2\theta_{13}$" if qty == "s2t"
+               else r"$\Delta m^2_{ee}$")
     plt.tight_layout()
 
     return ret
 
 
 def plot_s2t_best(df):
-    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
+    # plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
+    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ vs. minimum prompt energy", "best")
 
 
 def plot_s2t_mid(df):
-    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
+    # plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
+    plot_fit(df, "s2t", r"$\sin^2 2\theta_{13}$ vs. minimum prompt energy", "best")
 
 
 def plot_dm2_best(df):
-    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
+    # plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
+    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ vs. minimum prompt energy", "best")
 
 
 def plot_dm2_mid(df):
-    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
+    # plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
+    plot_fit(df, "dm2", r"$\Delta m^2_{ee}$ vs. minimum prompt energy", "best")
 
 
 def plot_fit_all(study="procut_first"):
@@ -193,18 +199,20 @@ def plot_fit_unc(df, qty, title):
 
     fig, ax = plt.subplots()
     ax.scatter(xs, (ymax - ymin)/2)
-    ax.set(xlabel="Prompt low cut [MeV]", title=title)
+    ax.set(xlabel="Minimum prompt energy (MeV)", title=title,
+           ylabel=(r"Error in $\sin^2 2\theta_{13}$" if qty == "s2t"
+                   else r"Error in $\Delta m^2_{ee}$"))
     fig.tight_layout()
 
     return fig, ax
 
 
 def plot_s2t_unc(df):
-    return plot_fit_unc(df, "s2t", r"$\sin^2 \theta_{13}$ uncertainty")
+    return plot_fit_unc(df, "s2t", r"$\sin^2 2\theta_{13}$ uncertainty vs. minimum prompt energy")
 
 
 def plot_dm2_unc(df):
-    return plot_fit_unc(df, "dm2", r"$\Delta m^2_{ee}$ uncertainty")
+    return plot_fit_unc(df, "dm2", r"$\Delta m^2_{ee}$ uncertainty vs. minimum prompt energy")
 
 
 def plot_fit_unc_all(study):

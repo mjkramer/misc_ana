@@ -14,6 +14,7 @@ try:
 except Exception:
     pass
 
+SUFFIX = ""                     # at end of plot title
 
 @dataclass
 class FitResult:
@@ -125,18 +126,24 @@ def read_study(study, numerical=True):
 
 def read_csv(csvfile):
     "Reads what we get from df.to_csv(csvfile)"
-    return pd.read_csv(csvfile, index_col=0)
+    df = pd.read_csv(csvfile, index_col=0)
+    for qty in ["s2t", "dm2"]:
+        df[f"{qty}_mid"] = (df[f"{qty}_min1sigma"] + df[f"{qty}_max1sigma"]) / 2
+    return df
 
 
 def plot_fit(studies,
              qty="s2t", title=r"$\sin^2 2\theta_{13}$ (best fit)",
-             best_or_mid="best"):
+             best_or_mid="best",
+             labels=None):
     if type(studies) is str:
         studies = [studies]
+    if labels is None:
+        labels = studies
 
     fig, ax = plt.subplots()
 
-    for study in studies:
+    for study, label in zip(studies, labels):
         df = read_csv(f"summaries/{study}.csv")
         xs = df["cut_mev"]
         ymin = df[f"{qty}_min1sigma"]
@@ -151,79 +158,132 @@ def plot_fit(studies,
         yerrhigh = ymax - ys
 
         ax.errorbar(xs, ys, yerr=[yerrlow, yerrhigh], fmt="o",
-                    label=study)
+                    label=label)
 
-    ax.set_title(title)
-    ax.set_xlabel("Delayed low cut [MeV]")
+    ax.set_title(title + SUFFIX)
+    ax.set_xlabel("Minimum delayed energy (MeV)")
+    ax.set_ylabel(r"$\sin^2 2\theta_{13}$" if qty == "s2t"
+                  else r"$\Delta m^2_{ee}$")
     if len(studies) > 1:
+    # if True:
         ax.legend()
     fig.tight_layout()
 
     studyname = "+".join(studies)
     outdir = f"gfx/fit_results/{studyname}"
-    filename = f"{qty}_{best_or_mid}.png"
+    filename = f"{qty}_{best_or_mid}.pdf"
     os.system(f"mkdir -p {outdir}")
     fig.savefig(f"{outdir}/{filename}")
 
 
-def plot_s2t_best(studies):
-    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best")
+def plot_s2t_best(studies, **kw):
+    # plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (best fit)", "best", **kw)
+    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ vs. minimum delayed energy", "best", **kw)
 
 
-def plot_s2t_mid(studies):
-    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid")
+def plot_s2t_mid(studies, **kw):
+    # plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ (1$\sigma$ midpoint)", "mid", **kw)
+    plot_fit(studies, "s2t", r"$\sin^2 2\theta_{13}$ vs. minimum delayed energy", "mid", **kw)
 
 
-def plot_dm2_best(studies):
-    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best")
+def plot_dm2_best(studies, **kw):
+    # plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (best fit)", "best", **kw)
+    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ vs. minimum delayed energy", "best", **kw)
 
 
-def plot_dm2_mid(studies):
-    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid")
+def plot_dm2_mid(studies, **kw):
+    # plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ (1$\sigma$ midpoint)", "mid", **kw)
+    plot_fit(studies, "dm2", r"$\Delta m^2_{ee}$ vs. minimum delayed energy", "mid", **kw)
 
 
-def plot_fit_all(studies):
+def plot_fit_all(studies, **kw):
     plot_s2t_best(studies)
     plot_s2t_mid(studies)
     plot_dm2_best(studies)
     plot_dm2_mid(studies)
 
 
-def plot_fit_unc(studies, qty, title):
+def plot_fit_unc(studies, qty, title, labels=None, **kw):
     if type(studies) is str:
         studies = [studies]
+    if labels is None:
+        labels = studies
 
     fig, ax = plt.subplots()
 
-    for study in studies:
+    for study, label in zip(studies, labels):
         df = read_csv(f"summaries/{study}.csv")
         xs = df["cut_mev"]
         ymin = df[f"{qty}_min1sigma"]
         ymax = df[f"{qty}_max1sigma"]
 
-        ax.scatter(xs, (ymax - ymin) / 2, label=study)
+        ax.scatter(xs, (ymax - ymin) / 2, label=label)
 
     ax.set_title(title)
-    ax.set_xlabel("Delayed low cut [MeV]")
+    ax.set_xlabel("Minimum delayed energy (MeV)")
+    ax.set_ylabel(r"Error in $\sin^2 2\theta_{13}$" if qty == "s2t"
+                  else r"Error in $\Delta m^2_{ee}$")
     if len(studies) > 1:
+    # if True:
         ax.legend()
     fig.tight_layout()
 
     studyname = "+".join(studies)
     outdir = f"gfx/fit_unc/{studyname}"
-    filename = f"unc_{qty}.png"
+    filename = f"unc_{qty}.pdf"
     os.system(f"mkdir -p {outdir}")
     fig.savefig(f"{outdir}/{filename}")
 
 
-def plot_s2t_unc(studies):
-    plot_fit_unc(studies, "s2t", r"$\sin^2 2\theta_{13}$ uncertainty")
+def plot_s2t_unc(studies, **kw):
+    plot_fit_unc(studies, "s2t", r"$\sin^2 2\theta_{13}$ uncertainty vs. minimum delayed energy", **kw)
 
 
-def plot_dm2_unc(studies):
-    plot_fit_unc(studies, "dm2", r"$\Delta m^2_{ee}$ uncertainty")
+def plot_dm2_unc(studies, **kw):
+    plot_fit_unc(studies, "dm2", r"$\Delta m^2_{ee}$ uncertainty vs. minimum delayed energy", **kw)
 
 
-def plot_fit_unc_all(studies):
-    plot_s2t_unc(studies)
-    plot_dm2_unc(studies)
+def plot_fit_unc_all(studies, **kw):
+    plot_s2t_unc(studies, **kw)
+    plot_dm2_unc(studies, **kw)
+
+
+def plot_methcomp():
+    studies = ["delcut_fourth@flat@none",
+               "delcut_fourth@rel@old", "delcut_fourth@rel@new",
+               "delcut_fourth@abs@old", "delcut_fourth@abs@new"]
+    labels = ["Flat", "Rel + old", "Rel + new", "Abs + old", "Abs + new"]
+    plot_s2t_mid(studies, labels=labels)
+    plot_dm2_mid(studies, labels=labels)
+
+
+def plot_fit_unc_thesis():
+    studies = ["delcut_fourth@rel@old",
+               "delcut_second_toymc_v2_fit@a3c4_ana@85a6"]
+    labels = ["Data", "Toy MC"]
+    plot_fit_unc_all(studies, labels=labels)
+
+def plot_bincomp():
+    studies = ["delcut_fourth@rel@new",
+               "delcut_fourth@bcw"]
+    labels = ["LBNL binning", "BCW binning"]
+    plot_s2t_mid(studies, labels=labels)
+    plot_dm2_mid(studies, labels=labels)
+
+def plot_vtxcomp_thesis():
+    studies = ["delcut_fourth",
+               "newVtxEff2_rInside1000", "newVtxEff2_rOutside1000",
+               "newVtxEff2_zBotThird", "newVtxEff2_zMidThird",
+               "newVtxEff2_zTopThird"]
+    labels = ["Full", "Inside", "Outside", "Bottom", "Middle", "Top"]
+    plot_s2t_mid(studies, labels=labels)
+    plot_dm2_mid(studies, labels=labels)
+
+def plot_vtxcomp_thesis_redo():
+    studies = ["delcut_fourth@bcw@rel@new@@redo",
+               "newVtxEff2_rInside1000@bcw@@redo", "newVtxEff2_rOutside1000@bcw@@redo",
+               "newVtxEff2_zBotThird@bcw@@redo", "newVtxEff2_zMidThird@bcw@@redo",
+               "newVtxEff2_zTopThird@bcw@@redo"]
+    labels = ["Full", "Inside", "Outside", "Bottom", "Middle", "Top"]
+    plot_s2t_mid(studies, labels=labels)
+    plot_dm2_mid(studies, labels=labels)

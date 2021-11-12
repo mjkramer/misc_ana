@@ -103,6 +103,12 @@ def find_ibdsel_config(template_fname):
     return glob(f"{direc}/../../stage2_pbp/{selname}/config.*.txt")[0]
 
 
+def tag_and_config(template_fname):
+    direc = os.path.dirname(template_fname)
+    selname = os.path.basename(direc)
+    return selname.split("@")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("template")
@@ -112,6 +118,7 @@ def main():
     ap.add_argument("--prompt-max", type=float, default=12)
     ap.add_argument("--delayed-min", type=float, default=6)
     ap.add_argument("--delayed-max", type=float, default=12)
+    ap.add_argument("--method", choices=["rel", "abs"], default="abs")
     args = ap.parse_args()
 
     f_in = open(args.template)
@@ -129,14 +136,17 @@ def main():
     print(singcalcs)
 
     phase = {6: 1, 8: 2, 7: 3}[args.nADs]
-    effcalc = DelayedEffCalc(nominal_ibdsel_config_file)
-    effcalc.cut = args.delayed_min
+    # effcalc = DelayedEffCalc(nominal_ibdsel_config_file)
+    # effcalc.cut = args.delayed_min
+    ref_tag, ref_config = tag_and_config(args.template)
+    effcalc = DelayedEffCalc(args.delayed_min, phase, ref_tag, ref_config)
+    ref_emin = 6 if args.method == "rel" else 4
     scale_factors = [1] * 8
     for site in [1, 2, 3]:
         for det in dets_for(site):
             if det_active(args.nADs, site, det):
                 scale_factors[idet(site, det)] = \
-                    effcalc.scale_factor(phase, site, det)
+                    effcalc.scale_factor(site, det, ref_emin)
 
     out_lines = []
     line_indices = {}

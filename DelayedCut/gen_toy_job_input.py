@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 
 
 def main():
@@ -11,7 +12,7 @@ def main():
 
     for line in open(args.cut_list_file):
         mev = line.strip()
-        print(f"{args.template_dir} {mev}")
+        print(f"{os.path.abspath(args.template_dir)} {mev}")
 
 
 if __name__ == '__main__':
