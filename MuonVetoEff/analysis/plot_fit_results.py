@@ -297,6 +297,8 @@ def plot_all(tag, offset_decimals=[1, 3], **kwargs):
     # plot_dm2_unc(df, tag)
     plot_s2t_mid(df, tag, offset_decimals=offset_decimals[0], **kwargs)
     plot_dm2_mid(df, tag, offset_decimals=offset_decimals[1], **kwargs)
+    plot_s2t_best(df, tag, offset_decimals=offset_decimals[0], **kwargs)
+    plot_dm2_best(df, tag, offset_decimals=offset_decimals[1], **kwargs)
 
 
 def plot_unc_all(tag, offset_decimals=[4, 4], detail=False, vmax=None, **kwargs):

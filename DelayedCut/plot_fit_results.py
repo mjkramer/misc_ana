@@ -249,28 +249,28 @@ def plot_fit_unc_all(studies, **kw):
 
 
 def plot_methcomp():
-    studies = ["delcut_fourth@flat@none",
-               "delcut_fourth@rel@old", "delcut_fourth@rel@new",
-               "delcut_fourth@abs@old", "delcut_fourth@abs@new"]
+    studies = ["delcut_fourth@bcw@flat@none@@redo",
+               "delcut_fourth@bcw@rel@old@@redo", "delcut_fourth@bcw@rel@new@@redo",
+               "delcut_fourth@bcw@abs@old@@redo", "delcut_fourth@bcw@abs@new@@redo"]
     labels = ["Flat", "Rel + old", "Rel + new", "Abs + old", "Abs + new"]
     plot_s2t_mid(studies, labels=labels)
     plot_dm2_mid(studies, labels=labels)
 
 
 def plot_fit_unc_thesis():
-    studies = ["delcut_fourth@rel@old",
-               "delcut_second_toymc_v2_fit@a3c4_ana@85a6"]
+    studies = ["delcut_fourth@bcw@rel@new@@redo",
+               "delcut_fourth_toymc@bcw@@redo"]
     labels = ["Data", "Toy MC"]
     plot_fit_unc_all(studies, labels=labels)
 
 def plot_bincomp():
-    studies = ["delcut_fourth@rel@new",
-               "delcut_fourth@bcw"]
-    labels = ["LBNL binning", "BCW binning"]
-    plot_s2t_mid(studies, labels=labels)
-    plot_dm2_mid(studies, labels=labels)
+    studies = ["delcut_fourth@bcw@rel@new@@redo",
+               "delcut_fourth@lbnl@rel@new@@redo"]
+    labels = ["BCW binning", "LBNL binning",]
+    plot_s2t_best(studies, labels=labels)
+    plot_dm2_best(studies, labels=labels)
 
-def plot_vtxcomp_thesis():
+def plot_vtxcomp_thesis_old():
     studies = ["delcut_fourth",
                "newVtxEff2_rInside1000", "newVtxEff2_rOutside1000",
                "newVtxEff2_zBotThird", "newVtxEff2_zMidThird",
@@ -279,11 +279,13 @@ def plot_vtxcomp_thesis():
     plot_s2t_mid(studies, labels=labels)
     plot_dm2_mid(studies, labels=labels)
 
-def plot_vtxcomp_thesis_redo():
+def plot_vtxcomp_thesis():
     studies = ["delcut_fourth@bcw@rel@new@@redo",
                "newVtxEff2_rInside1000@bcw@@redo", "newVtxEff2_rOutside1000@bcw@@redo",
                "newVtxEff2_zBotThird@bcw@@redo", "newVtxEff2_zMidThird@bcw@@redo",
                "newVtxEff2_zTopThird@bcw@@redo"]
     labels = ["Full", "Inside", "Outside", "Bottom", "Middle", "Top"]
+    plot_s2t_best(studies, labels=labels)
+    plot_dm2_best(studies, labels=labels)
     plot_s2t_mid(studies, labels=labels)
     plot_dm2_mid(studies, labels=labels)
