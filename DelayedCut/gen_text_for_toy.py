@@ -11,11 +11,13 @@ import ROOT as R
 R.PyConfig.IgnoreCommandLineOptions = True
 from root_pandas import read_root
 
+SEL_HOME = os.getenv("IBDSEL_HOME")
+
 for lib in ["common.so", "stage2.so"]:
-    R.gSystem.Load(os.path.join(os.getenv("IBDSEL_HOME"),
+    R.gSystem.Load(os.path.join(SEL_HOME,
                                 f"selector/_build/{lib}"))
 
-sys.path += [os.getenv("IBDSEL_HOME") + "/fit_prep"]
+sys.path += [SEL_HOME + "/fit_prep"]
 from delayed_eff import DelayedEffCalc
 
 from util import keep, read_ibdsel_config
@@ -34,7 +36,6 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
         return None
 
     livetime_s = sum(df["livetime_s"])
-    eMuIbd = sum(df["vetoEff"] * df["livetime_s"]) / livetime_s
     eMuSingles = sum(df["vetoEffSingles"] * df["livetime_s"]) / livetime_s
 
     singleMultCuts = R.MultCutTool.Cuts()
@@ -58,7 +59,7 @@ def make_singles_calc(nominal_ibdsel_config_file, stage2_file, det,
     ibdMultCuts.emax_after = config["ibdDmcEmaxAfter"]
     # ibdMultCuts.emax_after = delayed_max
 
-    return R.SinglesCalc(hSing, eMuIbd, livetime_s,
+    return R.SinglesCalc(hSing, livetime_s,
                          singleMultCuts, ibdMultCuts, eMuSingles,
                          prompt_min, prompt_max,
                          delayed_min, delayed_max,
@@ -91,21 +92,34 @@ def dets_for(site):
     return [1, 2, 3, 4] if site == 3 else [1, 2]
 
 
+def strip_suffix(suffixed_selname):
+    # tag@selname@suff@ix_123MeV -> tag@selname_123MeV
+    [tag, *rest] = suffixed_selname.split("@")
+    suffixed_configname = "@".join(rest)
+    [*head_parts, tail] = suffixed_configname.split("_")
+    suffixed_head = "_".join(head_parts)
+    head = suffixed_head.split("@")[0]
+    return f"{tag}@{head}_{tail}"
+
+
 def find_stage2_file(template_fname, nADs, site):
     direc = os.path.dirname(template_fname)
-    selname = os.path.basename(direc)
-    return f"{direc}/../../stage2_pbp/{selname}/stage2.pbp.eh{site}.{nADs}ad.root"
+    suffixed_selname = os.path.basename(direc)
+    selname = strip_suffix(suffixed_selname)
+    return f"{SEL_HOME}/../data/stage2_pbp/{selname}/stage2.pbp.eh{site}.{nADs}ad.root"
 
 
 def find_ibdsel_config(template_fname):
     direc = os.path.dirname(template_fname)
-    selname = os.path.basename(direc)
-    return glob(f"{direc}/../../stage2_pbp/{selname}/config.*.txt")[0]
+    suffixed_selname = os.path.basename(direc)
+    selname = strip_suffix(suffixed_selname)
+    return glob(f"{SEL_HOME}/../data/stage2_pbp/{selname}/config.*.txt")[0]
 
 
 def tag_and_config(template_fname):
     direc = os.path.dirname(template_fname)
-    selname = os.path.basename(direc)
+    suffixed_selname = os.path.basename(direc)
+    selname = strip_suffix(suffixed_selname)
     return selname.split("@")
 
 
@@ -118,7 +132,7 @@ def main():
     ap.add_argument("--prompt-max", type=float, default=12)
     ap.add_argument("--delayed-min", type=float, default=6)
     ap.add_argument("--delayed-max", type=float, default=12)
-    ap.add_argument("--method", choices=["rel", "abs"], default="abs")
+    ap.add_argument("--method", choices=["rel", "abs"], default="rel")
     args = ap.parse_args()
 
     f_in = open(args.template)
@@ -132,8 +146,6 @@ def main():
                                    args.prompt_min, args.prompt_max,
                                    args.delayed_min, args.delayed_max)
                  for site in [1, 2, 3] for det in dets_for(site)]
-
-    print(singcalcs)
 
     phase = {6: 1, 8: 2, 7: 3}[args.nADs]
     # effcalc = DelayedEffCalc(nominal_ibdsel_config_file)
@@ -255,7 +267,7 @@ def main():
     bkg_errs = new_vals(bkg_err)
 
     def rel_delayed_eff(site, det):
-        return effcalc.scale_factor(phase, site, det)
+        return effcalc.scale_factor(site, det, ref_emin)
     rel_delayed_effs = new_vals(rel_delayed_eff)
 
     # this isn't actually used, but we show the calculation for reference
