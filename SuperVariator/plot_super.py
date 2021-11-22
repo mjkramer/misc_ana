@@ -36,7 +36,7 @@ def bhist(a, bins=10, range=None, **kwargs):
     return bstep(edges, vals, **kwargs)
 
 
-def plot_scatter(study, qty="s2t"):
+def plot_scatter(study, qty="s2t", method="best"):
     df = read_full(study)
 
     fig, axs = plt.subplots(nrows=5, sharex=True, figsize=(10, 9))
@@ -44,7 +44,7 @@ def plot_scatter(study, qty="s2t"):
     xs = df["title"]
 
     yerr = 0.5 * (df[f"{qty}_max1sigma"] - df[f"{qty}_min1sigma"])
-    axs[0].errorbar(xs, df[f"{qty}_best"], yerr=yerr)
+    axs[0].errorbar(xs, df[f"{qty}_{method}"], yerr=yerr)
     # axs[0].set_ylabel(qty)
     axs[0].set_title(qty)
 
@@ -62,7 +62,7 @@ def plot_scatter(study, qty="s2t"):
     return fig, axs
 
 
-def plot_scatter_both(study):
+def plot_scatter_both(study, method="best"):
     gfxdir = f"gfx/scatter/{study}"
     os.system(f"mkdir -p {gfxdir}")
 
@@ -74,7 +74,7 @@ def plot_scatter_both(study):
 
     for i, qty in enumerate(["s2t", "dm2"]):
         yerr = 0.5 * (df[f"{qty}_max1sigma"] - df[f"{qty}_min1sigma"])
-        axs[i].errorbar(xs, df[f"{qty}_mid"], yerr=yerr)
+        axs[i].errorbar(xs, df[f"{qty}_{method}"], yerr=yerr)
         # axs[0].set_ylabel(qty)
         units = "" if qty == "s2t" else " (eV$^2$)"
         axs[i].set(ylabel=(QTY_XLABELS[qty] + units),
@@ -94,9 +94,15 @@ def plot_scatter_both(study):
 
     # axs[0].set_title(qty)
     fig.tight_layout()
-    fig.savefig(f"{gfxdir}/scatter_both.pdf")
+    fig.savefig(f"{gfxdir}/scatter_both_{method}.pdf")
 
     return fig, axs
+
+
+def plot_scatter_both_all(study):
+    plot_scatter_both(study, "best")
+    plot_scatter_both(study, "mid")
+
 
 QTY_RANGES = {
     "s2t": (0.083, 0.087),

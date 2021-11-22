@@ -253,6 +253,8 @@ def plot_methcomp():
                "delcut_fourth@bcw@rel@old@@redo", "delcut_fourth@bcw@rel@new@@redo",
                "delcut_fourth@bcw@abs@old@@redo", "delcut_fourth@bcw@abs@new@@redo"]
     labels = ["Flat", "Rel + old", "Rel + new", "Abs + old", "Abs + new"]
+    plot_s2t_best(studies, labels=labels)
+    plot_dm2_best(studies, labels=labels)
     plot_s2t_mid(studies, labels=labels)
     plot_dm2_mid(studies, labels=labels)
 
@@ -269,6 +271,8 @@ def plot_bincomp():
     labels = ["BCW binning", "LBNL binning",]
     plot_s2t_best(studies, labels=labels)
     plot_dm2_best(studies, labels=labels)
+    plot_s2t_mid(studies, labels=labels)
+    plot_dm2_mid(studies, labels=labels)
 
 def plot_vtxcomp_thesis_old():
     studies = ["delcut_fourth",
