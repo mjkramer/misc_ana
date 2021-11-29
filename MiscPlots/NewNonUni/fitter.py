@@ -10,12 +10,13 @@ R.gROOT.ProcessLine(".L fitfuncs.C+")
 
 
 class Fitter:
-    def __init__(self, name, func, xmin, xmax, npar):
+    def __init__(self, name, func, xmin, xmax, npar, peakpar):
         self.f = R.TF1(name, func, xmin, xmax, npar)
+        self.peakpar = peakpar
         self._do_draw = False
 
     def fit(self, hist):
-        "Returns [(par, err), ...], chi2ndf, success (0/1)"
+        "Returns peak, err, chi2ndf, success (0/1)"
         # prevent from being GC'd in case we want to peek
         # self.last_hist = hist
         tries = 0
@@ -38,16 +39,20 @@ class Fitter:
                     print('Fit failure!', self.f.GetName())
                     success = 0
                 buf, buf_e = self.f.GetParameters(), self.f.GetParErrors()
-                for b in [buf, buf_e]:
-                    # older ROOT: b.SetSize(f.GetNpar())
-                    b.reshape((self.f.GetNpar(),))
-                chi2ndf = self.f.GetChisquare() / self.f.GetNDF()
-                return list(zip(list(buf), list(buf_e))), chi2ndf, success
+                # for b in [buf, buf_e]:
+                #     # older ROOT: b.SetSize(f.GetNpar())
+                #     b.reshape((self.f.GetNpar(),))
+                if self.f.GetNDF() != 0:
+                    chi2ndf = self.f.GetChisquare() / self.f.GetNDF()
+                else:
+                    chi2ndf = 0
+                # return list(zip(list(buf), list(buf_e))), chi2ndf, success
+                return buf[self.peakpar], buf_e[self.peakpar], chi2ndf, success
 
 
 class SinglesFitter(Fitter):
     def __init__(self, name, xmin, xmax):
-        super().__init__(name, R.powgaus, xmin, xmax, 5)
+        super().__init__(name, R.powgaus, xmin, xmax, 5, 3)
         self.f.SetParLimits(4, 0.01, 0.5)
 
 
@@ -93,7 +98,7 @@ class C12Fitter(SinglesFitter):
 
 class NHFitter(Fitter):
     def __init__(self):
-        super().__init__("dybf", R.dybf, 1.9, 3, 6)
+        super().__init__("dybf", R.dybf, 1.9, 3, 6, 2)
         # super(NHFitter, self).__init__("dybf", R.dybf, 1.8, 2.6, 6)
 
     def fit(self, hist):
@@ -114,7 +119,7 @@ class NHFitter(Fitter):
 
 class BaseDybNGdFitter(Fitter):
     def __init__(self, funcname, func):
-        super().__init__(funcname, func, 7, 10, 6)
+        super().__init__(funcname, func, 7, 10, 6, 2)
 
     def fit(self, hist):
         max_val = hist.GetMaximum()
@@ -144,7 +149,7 @@ class DybfNGdFitter(BaseDybNGdFitter):
 # XXX try without exp, like Jianrun
 class BaseDoubCrysNGdFitter(Fitter):
     def __init__(self, funcname, func, extra_pars=0):
-        super().__init__(funcname, func, 7, 10, 5 + extra_pars)
+        super().__init__(funcname, func, 7, 10, 5 + extra_pars, 3)
 
     def init_extra_pars(self):
         pass
