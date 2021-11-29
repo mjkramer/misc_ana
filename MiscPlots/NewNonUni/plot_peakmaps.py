@@ -80,3 +80,8 @@ def plot_grid_all(peak, relGdLS=False):
 
     for site, det in zip(sites, dets):
         plot_grid(site, det, peak, relGdLS)
+
+
+def plot_grid_all_all(relGdLS=False):
+    for peak in ['nGd', 'nGdExp', 'nGdDyb1', 'nGdDyb2']:
+        plot_grid_all(peak, relGdLS)
