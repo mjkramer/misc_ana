@@ -8,7 +8,9 @@ import pandas as pd
 import ROOT as R
 R.gROOT.SetBatch(True)
 
-from fitter import NGdFitter
+from fitter import Fitter
+from fitter import DoubCrysNGdFitter, DoubCrysPlusExpNGdFitter
+from fitter import DybfNGdFitter, MyDybfNGdFitter
 from util import deleter
 
 DIVS_R2 = np.linspace(0., 4e6, 11)
@@ -17,8 +19,6 @@ DIVS_Z = np.linspace(-2e3, 2e3, 11)
 SELS = ['post17_v5v3v1_NL@test_newNonUni_alphas_ngd',
         'post17_v5v3v1_NL@test_newNonUni_alphas_only',
         'post17_v5v3v1_NL@test_newNonUni_off']
-
-NGD_FITTER = NGdFitter()
 
 
 def get_vtx_cut(r2bounds, zbounds, suffix):
@@ -41,7 +41,7 @@ def get_vtx_cut(r2bounds, zbounds, suffix):
     return ' && '.join(conds)
 
 
-def fit_nGd(tree: R.TTree, r2bounds, zbounds):
+def fit_ibd(fitter: Fitter, tree: R.TTree, r2bounds, zbounds):
     cut = get_vtx_cut(r2bounds, zbounds, 'D')
     print(cut)
 
@@ -49,7 +49,7 @@ def fit_nGd(tree: R.TTree, r2bounds, zbounds):
     tree.Draw("eD>>h", cut)
 
     with deleter(h):
-        pars, success = NGD_FITTER.fit(h)
+        pars, success = fitter.fit(h)
         return pars[3], success
 
 
@@ -73,15 +73,17 @@ def get_rows(tree, site, det):
         for binZ in range(1, len(DIVS_Z)):
             r2min, r2max = DIVS_R2[binR2 - 1], DIVS_R2[binR2]
             zmin, zmax = DIVS_Z[binZ - 1], DIVS_Z[binZ]
-            (peak, err), success = fit_nGd(tree, (r2min, r2max), (zmin, zmax))
+            (peak, err), chi2ndf, success = \
+                fit_ibd(tree, (r2min, r2max), (zmin, zmax))
             row = {'site': site, 'det': det, 'binR2': binR2, 'binZ': binZ,
-                   'peak_nGd': peak, 'err_nGd': err, 'success': success}
+                   'fit_peak': peak, 'fit_err': err,
+                   'chi2ndf': chi2ndf, 'success': success}
             data.append(row)
 
     return data
 
 
-def dump_fits(selname):
+def dump_fits(fitter: Fitter, peakname, selname):
     data = []
 
     for site in [1, 2, 3]:
@@ -91,12 +93,20 @@ def dump_fits(selname):
             if not tree:
                 print(':-(')
                 continue
-            rows = get_rows(tree, site, det)
+            rows = get_rows(fitter, tree, site, det)
             data.extend(rows)
 
     outdir = f'data/peakmaps/{selname}'
     os.system(f'mkdir -p {outdir}')
     df = pd.DataFrame(data)
-    df.to_csv(f'{outdir}/peaks_nGd.csv', index=False)
+    df.to_csv(f'{outdir}/peaks_{peakname}.csv', index=False)
 
     return data
+
+
+def dump_fits_all():
+    for sel in SELS:
+        dump_fits(DoubCrysNGdFitter(), 'nGd', sel)
+        dump_fits(DoubCrysPlusExpNGdFitter(), 'nGdExp', sel)
+        dump_fits(MyDybfNGdFitter(), 'nGdDyb1', sel)
+        dump_fits(DybfNGdFitter(), 'nGdDyb2', sel)
