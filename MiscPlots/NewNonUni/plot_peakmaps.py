@@ -7,9 +7,11 @@ import pandas as pd
 
 from dump_peaks import SELS, DIVS_R2, DIVS_Z
 
-CORRNAMES = {SELS[0]: "no",
-             SELS[1]: "alphas+nGd",
-             SELS[2]: "alphas-only"}
+CORRNAMES = {'post17_v5v3v1@test_newNonUni_alphas_ngd': "alphas + nGd",
+             'post17_v5v3v1@test_newNonUni_alphas_only': "alphas only",
+             'post17_v5v3v1@test_newNonUni_off': "no corr."}
+
+plt.rcParams.update({'font.size': 13})
 
 
 def midR2(binR2):
@@ -49,17 +51,17 @@ def plot_nGd_grid(site, det):
     dfs = [get_df(sel, site, det) for sel in SELS]
     vmin, vmax = get_extrema(dfs)
 
-    fig, axs = plt.subplots(2, 2, figsize=(12.8, 9.6))
+    fig, axs = plt.subplots(2, 2, figsize=(14.8, 9.6))
     axs[1][1].set_axis_off()
 
     for sel, df, ax in zip(SELS, dfs, axs.flatten()):
         plt.sca(ax)
-        title = f'nGd peak ({CORRNAMES[sel]} corr.), EH{site}-AD{det}, post-P17B'
+        title = f'nGd peak ({CORRNAMES[sel]}), EH{site}-AD{det}, post-P17B'
         plot_nGd(df, title, vmin=vmin, vmax=vmax)
 
     fig.tight_layout()
 
-    tag = SELS[0].split("@")[0] # e.g. post17_v5v3v1
+    tag = SELS[0].split("@")[0]  # e.g. post17_v5v3v1
     gfxdir = f'gfx/nGd_grid/{tag}'
     os.system(f'mkdir -p {gfxdir}')
     for ext in ['pdf', 'png']:

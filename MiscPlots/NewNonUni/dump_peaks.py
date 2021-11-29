@@ -8,15 +8,15 @@ import pandas as pd
 import ROOT as R
 R.gROOT.SetBatch(True)
 
-from fitter import Fitter, NGdFitter
+from fitter import NGdFitter
 from util import deleter
 
 DIVS_R2 = np.linspace(0., 4e6, 11)
 DIVS_Z = np.linspace(-2e3, 2e3, 11)
 
-SELS = ['post17_v5v3v1@test_newNonUni_off',
-        'post17_v5v3v1@test_newNonUni_alphas_ngd',
-        'post17_v5v3v1@test_newNonUni_alphas_only']
+SELS = ['post17_v5v3v1@test_newNonUni_alphas_ngd',
+        'post17_v5v3v1@test_newNonUni_alphas_only',
+        'post17_v5v3v1@test_newNonUni_off']
 
 NGD_FITTER = NGdFitter()
 
