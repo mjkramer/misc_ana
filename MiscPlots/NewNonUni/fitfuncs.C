@@ -19,7 +19,7 @@ double powgaus(double* x, double* par)
 // Chris's (i.e. Yury's?) DYB function
 // See /global/homes/m/marshalc/TDNU/static/fit_staticNU.C
 // ... copied in refs/fit_staticNU.C
-double my_dybf(double* x, double* par)
+double mydybf(double* x, double* par)
 {
   double N1 = par[0], N2 = par[1], mu = par[2], sigma = par[3];
   double lambda = par[4], a = par[5];
@@ -40,7 +40,7 @@ double my_dybf(double* x, double* par)
 #undef ERF2
 }
 
-Double_t dybf(Double_t *x,Double_t *par)
+double dybf(double *x, double *par)
 {
   Double_t N1 = par[0];
   Double_t N2 = par[1];
@@ -63,6 +63,32 @@ Double_t dybf(Double_t *x,Double_t *par)
   return N1*f_peak + N2*(f_tail1 + f_tail2);
 }
 
+double _doubdybf_helper(double (*fn)(double*, double*),
+                        double *x, double *par)
+{
+  double N11 = par[0], N21 = par[1], mu1 = par[2], sigma = par[3],
+    lambda = par[4], a = par[5];
+
+  double kN = 0.22598, kMu = 1.075566;
+
+  double N12 = kN * N11, N22 = kN * N21;
+  double mu2 = kMu * mu1;
+
+  double p1[] = {N11, N21, mu1, sigma, lambda, a};
+  double p2[] = {N12, N22, mu2, sigma, lambda, a};
+
+  return fn(x, p1) + fn(x, p2);
+}
+
+double doubdybf(double *x, double *par)
+{
+  return _doubdybf_helper(dybf, x, par);
+}
+
+double doubmydybf(double *x, double *par)
+{
+  return _doubdybf_helper(mydybf, x, par);
+}
 
 // single crystal ball helper
 inline double singcrys(double arg, double a, double n)
