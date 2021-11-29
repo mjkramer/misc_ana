@@ -70,7 +70,7 @@ def plot_grid(site, det, peak, relGdLS=False):
     name = 'gridRel' if relGdLS else 'grid'
     gfxdir = f'gfx/{name}/{tag}'
     os.system(f'mkdir -p {gfxdir}')
-    for ext in ['pdf', 'png']:
+    for ext in ['pdf', 'png', 'svg', 'eps']:
         fig.savefig(f'{gfxdir}/{name}_{peak}_eh{site}_ad{det}.{ext}')
 
 
