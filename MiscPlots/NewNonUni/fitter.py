@@ -38,7 +38,8 @@ class Fitter(object):
                     success = 0
                 buf, buf_e = self.f.GetParameters(), self.f.GetParErrors()
                 for b in [buf, buf_e]:
-                    b.SetSize(self.f.GetNpar())
+                    # older ROOT: b.SetSize(f.GetNpar())
+                    b.reshape((self.f.GetNpar(),))
                 return list(zip(list(buf), list(buf_e))), success
 
 

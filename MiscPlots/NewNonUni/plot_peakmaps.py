@@ -7,9 +7,9 @@ import pandas as pd
 
 from dump_peaks import SELS, DIVS_R2, DIVS_Z
 
-CORRNAMES = {'post17_v5v3v1@test_newNonUni_alphas_ngd': "alphas + nGd",
-             'post17_v5v3v1@test_newNonUni_alphas_only': "alphas only",
-             'post17_v5v3v1@test_newNonUni_off': "no corr."}
+CORRNAMES = {'post17_v5v3v1_NL@test_newNonUni_alphas_ngd': "alphas + nGd",
+             'post17_v5v3v1_NL@test_newNonUni_alphas_only': "alphas only",
+             'post17_v5v3v1_NL@test_newNonUni_off': "no corr."}
 
 plt.rcParams.update({'font.size': 13})
 
@@ -61,7 +61,7 @@ def plot_nGd_grid(site, det):
 
     fig.tight_layout()
 
-    tag = SELS[0].split("@")[0]  # e.g. post17_v5v3v1
+    tag = SELS[0].split("@")[0]  # e.g. post17_v5v3v1_NL
     gfxdir = f'gfx/nGd_grid/{tag}'
     os.system(f'mkdir -p {gfxdir}')
     for ext in ['pdf', 'png']:
