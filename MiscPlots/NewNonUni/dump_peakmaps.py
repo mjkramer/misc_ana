@@ -10,19 +10,13 @@ import pandas as pd
 import ROOT as R
 R.gROOT.SetBatch(True)
 
+from common import DIVS_R2, DIVS_Z, SELS
 from fitter import Fitter
 from fitter import DoubCrysNGdFitter, DoubCrysPlusExpNGdFitter
 from fitter import DybfNGdFitter, MyDybfNGdFitter
 from util import deleter
 
 NUM_PROCS = 20
-
-DIVS_R2 = np.linspace(0., 4e6, 11)
-DIVS_Z = np.linspace(-2e3, 2e3, 11)
-
-SELS = ['post17_v5v3v1_NL@test_newNonUni_alphas_ngd',
-        'post17_v5v3v1_NL@test_newNonUni_alphas_only',
-        'post17_v5v3v1_NL@test_newNonUni_off']
 
 
 def get_vtx_cut(r2bounds, zbounds, suffix):
@@ -127,8 +121,6 @@ def dump_fits(fitclass, peakname, selname):
     df = pd.DataFrame(data)
     df.sort_values(['site', 'det', 'binR2', 'binZ'], inplace=True)
     df.to_csv(f'{outdir}/peaks_{peakname}.csv', index=False)
-
-    return data
 
 
 def dump_fits_all():

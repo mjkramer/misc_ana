@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from dump_peaks import SELS, DIVS_R2, DIVS_Z
+from common import SELS, DIVS_R2, DIVS_Z
 
 CORRNAMES = {'post17_v5v3v1_NL@test_newNonUni_alphas_ngd': "$\\alpha$+nGd",
              'post17_v5v3v1_NL@test_newNonUni_alphas_only': "$\\alpha$-only",
