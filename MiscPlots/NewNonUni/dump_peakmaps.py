@@ -14,6 +14,7 @@ from common import DIVS_R2, DIVS_Z, SELS
 from fitter import Fitter
 from fitter import DoubCrysNGdFitter, DoubCrysPlusExpNGdFitter
 from fitter import DybfNGdFitter, MyDybfNGdFitter
+from fitter import K40Fitter, Tl208Fitter
 from util import deleter
 
 NUM_PROCS = 20
@@ -64,7 +65,7 @@ def get_tree(selname, site, det):
     return None
 
 
-def get_row(context, binR2, binZ):
+def get_ibd_row(context, binR2, binZ):
     fitter, tree, site, det = context
 
     r2min, r2max = DIVS_R2[binR2 - 1], DIVS_R2[binR2]
@@ -78,30 +79,47 @@ def get_row(context, binR2, binZ):
             'chi2ndf': chi2ndf, 'success': success}
 
 
-def get_rows(selname, fitclass, site, det, bins):
+def get_ibd_rows(selname, fitclass, site, det, bins):
     tree = get_tree(selname, site, det)
     if not tree:
         return []
     fitter = fitclass()
     context = (fitter, tree, site, det)
 
-    return [get_row(context, binR2, binZ)
+    return [get_ibd_row(context, binR2, binZ)
             for (binR2, binZ) in bins]
 
-    # args = product([context],
-    #                range(1, len(DIVS_R2)),
-    #                range(1, len(DIVS_Z)))
 
-    # # data = []
-    # # for context, binR2, binZ in args:
-    # #     data.append(get_row(context, binR2, binZ))
+# h_single_AD2_r2_9_z_9
+#
 
-    # data = Pool(processes=20).starmap(get_row, args)
+def get_singles_hist(files, det, binR2, binZ):
+    hname = f'h_single_AD{det}_r2_{binR2}_z_{binZ}'
+    hists = [h for f in files if (h := f.Get(hname))]
+    hist = hists[0].Clone()
+    for h in hists[1:]:
+        hist.Add(h)
+    return hist
 
-    # return data
+
+def get_singles_row(files, det, binR2, binZ):
+    h = get_singles_hist(files, det, binR2, binZ)
+    with deleter(h):
+        peak, err, chi2ndf, success = fitter.fit(h)
+        return {'site': site, 'det': det, 'binR2': binR2, 'binZ': binZ,
+                'fit_peak': peak, 'fit_err': err,
+                'chi2ndf': chi2ndf, 'success': success}
 
 
-def dump_fits(fitclass, peakname, selname):
+def get_singles_rows(selname, fitclass, site, det, bins):
+    files = [R.TFile(f'input/{selname}/stage2.pbp.eh{site}.{nADs}ad.root')
+             for nADs in [6, 8, 7]]
+    fitter = fitclass()
+
+    return [get_singles_row(files, det, binR2, binZ)
+            for (binR2, binZ) in bins]
+
+def dump_fits(fitclass, peakname, selname, getter):
     data = []
 
     for site in [1, 2, 3]:
@@ -113,7 +131,7 @@ def dump_fits(fitclass, peakname, selname):
             args = product([selname], [fitclass], [site], [det],
                            bin_chunks)
             # rows = get_rows(fitter, tree, site, det)
-            rows = Pool(processes=NUM_PROCS).starmap(get_rows, args)
+            rows = Pool(processes=NUM_PROCS).starmap(getter, args)
             data.extend(chain(*rows))
 
     outdir = f'data/peakmaps/{selname}'
@@ -123,9 +141,25 @@ def dump_fits(fitclass, peakname, selname):
     df.to_csv(f'{outdir}/peaks_{peakname}.csv', index=False)
 
 
-def dump_fits_all():
+def dump_ibd_fits(fitclass, peakname, selname):
+    return dump_fits(fitclass, peakname, selname,
+                     get_ibd_rows)
+
+
+def dump_ibd_fits_all():
     for sel in SELS:
-        dump_fits(DoubCrysNGdFitter, 'nGd', sel)
-        dump_fits(DoubCrysPlusExpNGdFitter, 'nGdExp', sel)
-        dump_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
-        dump_fits(DybfNGdFitter, 'nGdDyb2', sel)
+        dump_ibd_fits(DoubCrysNGdFitter, 'nGd', sel)
+        dump_ibd_fits(DoubCrysPlusExpNGdFitter, 'nGdExp', sel)
+        dump_ibd_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
+        dump_ibd_fits(DybfNGdFitter, 'nGdDyb2', sel)
+
+
+def dump_singles_fits(fitclass, peakname, selname):
+    return dump_fits(fitclass, peakname, selname,
+                     get_singles_rows)
+
+
+def dump_singles_fits_all():
+    for sel in SELS:
+        dump_singles_fits(K40Fitter, 'K40', sel)
+        dump_singles_fits(Tl208Fitter, 'Tl208', sel)
