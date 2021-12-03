@@ -1,0 +1,18 @@
+{
+  "exclude": [
+    "**/ROOT.py",
+    "**/MyROOT.py",
+    "**/fit_results",
+    "**/gfx",
+    "**/data",
+    "**/summaries",
+  ],
+  "ignore": [
+    "**/ROOT.py",
+    "**/MyROOT.py",
+    "**/fit_results",
+    "**/gfx",
+    "**/data",
+    "**/summaries",
+  ]
+}

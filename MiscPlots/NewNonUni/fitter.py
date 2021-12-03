@@ -4,7 +4,7 @@
 
 MAXTRIES = 50
 
-import ROOT as R
+import MyROOT as R
 
 R.gROOT.ProcessLine(".L fitfuncs.C+")
 
