@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import ROOT as R
+import MyROOT as R
 R.gROOT.SetBatch(True)
 
 from common import DIVS_R2, DIVS_Z, SELS
@@ -93,16 +93,23 @@ def get_ibd_rows(selname, fitclass, site, det, bins):
 # h_single_AD2_r2_9_z_9
 #
 
+class NoHistException(Exception):
+    pass
+
+
 def get_singles_hist(files, det, binR2, binZ):
     hname = f'h_single_AD{det}_r2_{binR2}_z_{binZ}'
     hists = [h for f in files if (h := f.Get(hname))]
+    if not hists:
+        raise NoHistException
     hist = hists[0].Clone()
     for h in hists[1:]:
         hist.Add(h)
     return hist
 
 
-def get_singles_row(files, det, binR2, binZ):
+def get_singles_row(context, binR2, binZ):
+    fitter, files, site, det = context
     h = get_singles_hist(files, det, binR2, binZ)
     with deleter(h):
         peak, err, chi2ndf, success = fitter.fit(h)
@@ -116,8 +123,13 @@ def get_singles_rows(selname, fitclass, site, det, bins):
              for nADs in [6, 8, 7]]
     fitter = fitclass()
 
-    return [get_singles_row(files, det, binR2, binZ)
-            for (binR2, binZ) in bins]
+    context = (fitter, files, site, det)
+    try:
+        return [get_singles_row(context, binR2, binZ)
+                for (binR2, binZ) in bins]
+    except NoHistException:
+        return []
+
 
 def dump_fits(fitclass, peakname, selname, getter):
     data = []

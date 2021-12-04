@@ -24,11 +24,14 @@ def midZ(binZ):
 
 def get_df(sel, site, det, peak, *, relGdLS=False):
     full_df = pd.read_csv(f'data/peakmaps/{sel}/peaks_{peak}.csv')
-    df = full_df.query(f'site == {site} and det == {det}').copy()
+    assert isinstance(full_df, pd.DataFrame)
+    df = full_df.query(f'site == {site} and det == {det}').copy() # type:ignore
+    assert isinstance(df, pd.DataFrame)
     df["midR2"] = df["binR2"].map(midR2)
     df["midZ"] = df["binZ"].map(midZ)
     if relGdLS:
         sub_df = df.query('binR2 <= 6 and binZ >= 2 and binZ <= 9')
+        assert isinstance(sub_df, pd.DataFrame)
         avg = sub_df['fit_peak'].mean()
         df['fit_peak'] /= avg
     return df
@@ -84,4 +87,9 @@ def plot_grid_all(peak, relGdLS=False):
 
 def plot_grid_all_all(relGdLS=False):
     for peak in ['nGd', 'nGdExp', 'nGdDyb1', 'nGdDyb2']:
+        plot_grid_all(peak, relGdLS)
+
+
+def plot_grid_all_all_singles(relGdLS=False):
+    for peak in ['K40', 'Tl208']:
         plot_grid_all(peak, relGdLS)
