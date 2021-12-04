@@ -1,0 +1,3 @@
+* Caveats
+** Bin numbering conventions
+Originally, I used 0-based bin indexes for the names of the pixelated singles histograms produced by IbdSel. This is confusing since the correction maps etc. use 1-based indexing. See fix_singlepix_names.py (commit XXX) for the code we used to fudge the histogram names. This fix was applied to the stage2_pbp files but not the stage2_dbd files!
