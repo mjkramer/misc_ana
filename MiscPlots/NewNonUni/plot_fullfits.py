@@ -5,17 +5,14 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import SELS
-
-CORRNAMES = {'post17_v5v3v1_NL@test_newNonUni_alphas_ngd': "$\\alpha$+nGd",
-             'post17_v5v3v1_NL@test_newNonUni_alphas_only': "$\\alpha$-only",
-             'post17_v5v3v1_NL@test_newNonUni_off': "no corr."}
+from common import CONFIGS, TAGS
 
 plt.rcParams.update({'font.size': 13})
 
 
-def get_df(sel, peak):
-    df = pd.read_csv(f'data/fullfits/{sel}/fullfits_{peak}.csv')
+def get_df(tag: str, config: str, peak: str):
+    df = pd.read_csv(f'data/fullfits/{tag}@{config}/fullfits_{peak}.csv')
+    assert isinstance(df, pd.DataFrame)
     df["AD"] = 2 * (df["site"] - 1) + df["det"]
     df["label"] = [f'EH{site}-AD{det}'
                    for (site, det) in zip(df['site'], df['det'])]
@@ -41,27 +38,34 @@ def get_extrema(dfs):
     return ymin - rng / 20, ymax + rng / 20
 
 
-def plot_fullGrid(peak):
-    dfs = [get_df(sel, peak) for sel in SELS]
+def plot_fullGrid(tag: str, peak: str):
+    dfs = [get_df(tag, config, peak)
+           for config in CONFIGS]
     ylim = get_extrema(dfs)
 
-    fig, axs = plt.subplots(2, 2, figsize=(14.8, 9.6))
-    axs[1][1].set_axis_off()
+    fig: plt.Figure = plt.figure(figsize=(12.2, 9.6))
+    gs = fig.add_gridspec(4, 4)
+    axs = [fig.add_subplot(gs[r:r+2, c:c+2])
+           for (r, c) in [(0, 0), (0, 2), (2, 1)]]
 
-    for sel, df, ax in zip(SELS, dfs, axs.flatten()):
+    for config, df, ax in zip(CONFIGS, dfs, axs):
         plt.sca(ax)
-        title = f'{peak} peak ({CORRNAMES[sel]})'
+        title = f'{peak} peak ({CONFIGS[config]}), {TAGS[tag]}'
         plot_df(df, title, ylim=ylim)
 
     fig.tight_layout()
 
-    tag = SELS[0].split("@")[0]  # e.g. post17_v5v3v1_NL
-    gfxdir = f'gfx/fullfits/{tag}'
+    gfxdir = f'gfx/fullfits/{TAGS[tag]}'
     os.system(f'mkdir -p {gfxdir}')
     for ext in ['pdf', 'png']:
         fig.savefig(f'{gfxdir}/fullfits_{peak}.{ext}')
 
 
-def plot_fullGrid_all():
-    for peak in ['nGd', 'nGdExp', 'nGdDyb1', 'nGdDyb2']:
-        plot_fullGrid(peak)
+def plot_fullGrid_all2(tag, /, **kwargs):
+    for peak in ['nGdExp', 'K40', 'Tl208', 'PromptE']:
+        plot_fullGrid(tag, peak, **kwargs)
+
+
+def plot_grid_all3(**kwargs):
+    for tag in TAGS:
+        plot_fullGrid_all2(tag, **kwargs)

@@ -57,14 +57,14 @@ def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
     sites = [1, 2, 2, 3, 3, 3, 3]
     dets = [2, 1, 2, 1, 2, 3, 4]
     dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
-           for config in CONFIGS.keys()
+           for config in CONFIGS
            for (site, det) in zip(sites, dets)]
     return get_extrema(dfs)
 
 
 def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs):
     dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
-           for config in CONFIGS.keys()]
+           for config in CONFIGS]
     if autorange:
         vmin, vmax = get_extrema(dfs)
         kwargs |= dict(vmin=vmin, vmax=vmax)
@@ -74,7 +74,7 @@ def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs)
     axs = [fig.add_subplot(gs[r:r+2, c:c+2])
            for (r, c) in [(0, 0), (0, 2), (2, 1)]]
 
-    for config, df, ax in zip(CONFIGS.keys(), dfs, axs):
+    for config, df, ax in zip(CONFIGS, dfs, axs):
         plt.sca(ax)
         # suffix = ' (rel. GdLS)' if relGdLS else ''
         title = f'{peak} peak ({CONFIGS[config]}), EH{site}-AD{det}, {TAGS[tag]}'
@@ -107,14 +107,15 @@ def plot_grid_all(tag, peak, /, **kwargs):
     cbar.savefig(f'{gfxdir}/colorbar.png')
 
 
-def plot_grid_all_all(tag, /, **kwargs):
-    for peak in ['nGd', 'nGdExp', 'nGdDyb1', 'nGdDyb2']:
+def plot_grid_all2(tag, /, **kwargs):
+    # for peak in ['nGd', 'nGdExp', 'nGdDyb1', 'nGdDyb2']:
+    for peak in ['nGdExp', 'K40', 'Tl208', 'PromptE']:
         plot_grid_all(tag, peak, **kwargs)
 
 
-def plot_grid_all_all_singles(tag, /, **kwargs):
-    for peak in ['K40', 'Tl208']:
-        plot_grid_all(tag, peak, **kwargs)
+def plot_grid_all3(**kwargs):
+    for tag in TAGS:
+        plot_grid_all2(tag, **kwargs)
 
 
 def just_colorbar(vmin: float, vmax: float):

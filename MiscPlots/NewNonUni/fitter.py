@@ -207,3 +207,11 @@ class DoubCrysPlusExpNGdFitter(BaseDoubCrysNGdFitter):
 
 #         self.f.SetParameters(max_val, 1, 1, 8, 0.3, 1, -1)
 #         return super().fit(hist)
+
+class MeanFitter(Fitter):
+    def __init__(self):
+        pass
+
+    def fit(self, h):
+        chi2ndf, success = 1., 1
+        return h.GetMean(), h.GetMeanError(), chi2ndf, success

@@ -3,7 +3,7 @@
 from os.path import isfile
 from shutil import copy
 
-from common import SELS
+from common import CONFIGS
 import MyROOT as R
 
 
@@ -41,7 +41,8 @@ def fix_names(sel: str, site: int):
 
 
 def main():
-    for sel in SELS:
+    for config in CONFIGS:
+        sel = f'post17_v5v3v1_NL@{config}'
         for site in [1, 2, 3]:
             fix_names(sel, site)
 

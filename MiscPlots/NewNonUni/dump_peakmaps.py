@@ -10,14 +10,27 @@ import pandas as pd
 import MyROOT as R
 R.gROOT.SetBatch(True)
 
-from common import DIVS_R2, DIVS_Z, SELS
-from fitter import Fitter
+from common import CONFIGS, DIVS_R2, DIVS_Z, TAGS
+from fitter import Fitter, MeanFitter
 from fitter import DoubCrysNGdFitter, DoubCrysPlusExpNGdFitter
 from fitter import DybfNGdFitter, MyDybfNGdFitter
 from fitter import K40Fitter, Tl208Fitter
 from util import deleter
 
 NUM_PROCS = 20
+
+
+def get_tree(selname, site, det):
+    treename = f'ibd_AD{det}'
+    tree = R.TChain(treename)
+    for nADs in [6, 8, 7]:
+        path = f'input/{selname}/stage2.pbp.eh{site}.{nADs}ad.root'
+        f = R.TFile(path)
+        if f.Get(treename):
+            tree.Add(path)
+    if tree.GetEntries():
+        return tree
+    return None
 
 
 def get_vtx_cut(r2bounds, zbounds, suffix):
@@ -40,58 +53,51 @@ def get_vtx_cut(r2bounds, zbounds, suffix):
     return ' && '.join(conds)
 
 
-def fit_ibd(fitter: Fitter, tree: R.TTree, r2bounds, zbounds):
+def fit_ibd(fitter: Fitter, tree: R.TTree, branch, r2bounds, zbounds):
     cut = get_vtx_cut(r2bounds, zbounds, 'D')
     print(cut)
 
-    h = R.TH1F("h", "h", 120, 6, 12)
-    tree.Draw("eD>>h", cut)
+    h = R.TH1F("h", "h", 240, 0, 12)
+    tree.Draw(f"{branch}>>h", cut)
 
     with deleter(h):
         peak, err, chi2ndf, success = fitter.fit(h)
         return peak, err, chi2ndf, success
 
 
-def get_tree(selname, site, det):
-    treename = f'ibd_AD{det}'
-    tree = R.TChain(treename)
-    for nADs in [6, 8, 7]:
-        path = f'input/{selname}/stage2.pbp.eh{site}.{nADs}ad.root'
-        f = R.TFile(path)
-        if f.Get(treename):
-            tree.Add(path)
-    if tree.GetEntries():
-        return tree
-    return None
-
-
-def get_ibd_row(context, binR2, binZ):
+def get_ibd_row(branch, context, binR2, binZ):
     fitter, tree, site, det = context
 
     r2min, r2max = DIVS_R2[binR2 - 1], DIVS_R2[binR2]
     zmin, zmax = DIVS_Z[binZ - 1], DIVS_Z[binZ]
 
     peak, err, chi2ndf, success = \
-        fit_ibd(fitter, tree, (r2min, r2max), (zmin, zmax))
+        fit_ibd(fitter, tree, branch,
+                (r2min, r2max), (zmin, zmax))
 
     return {'site': site, 'det': det, 'binR2': binR2, 'binZ': binZ,
             'fit_peak': peak, 'fit_err': err,
             'chi2ndf': chi2ndf, 'success': success}
 
 
-def get_ibd_rows(selname, fitclass, site, det, bins):
+def get_ibd_rows(branch, selname, fitclass, site, det, bins):
     tree = get_tree(selname, site, det)
     if not tree:
         return []
     fitter = fitclass()
     context = (fitter, tree, site, det)
 
-    return [get_ibd_row(context, binR2, binZ)
+    return [get_ibd_row(branch, context, binR2, binZ)
             for (binR2, binZ) in bins]
 
 
-# h_single_AD2_r2_9_z_9
-#
+def get_prompt_rows(*args):
+    return get_ibd_rows('eP', *args)
+
+
+def get_delayed_rows(*args):
+    return get_ibd_rows('eD', *args)
+
 
 class NoHistException(Exception):
     pass
@@ -153,17 +159,39 @@ def dump_fits(fitclass, peakname, selname, getter):
     df.to_csv(f'{outdir}/peaks_{peakname}.csv', index=False)
 
 
-def dump_ibd_fits(fitclass, peakname, selname):
+def dump_delayed_fits(fitclass, peakname, selname):
     return dump_fits(fitclass, peakname, selname,
-                     get_ibd_rows)
+                     get_delayed_rows)
 
 
-def dump_ibd_fits_all():
-    for sel in SELS:
-        dump_ibd_fits(DoubCrysNGdFitter, 'nGd', sel)
-        dump_ibd_fits(DoubCrysPlusExpNGdFitter, 'nGdExp', sel)
-        dump_ibd_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
-        dump_ibd_fits(DybfNGdFitter, 'nGdDyb2', sel)
+def dump_delayed_fits_all(tag):
+    for config in CONFIGS:
+        sel = f'{tag}@{config}'
+        dump_delayed_fits(DoubCrysNGdFitter, 'nGd', sel)
+        dump_delayed_fits(DoubCrysPlusExpNGdFitter, 'nGdExp', sel)
+        dump_delayed_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
+        dump_delayed_fits(DybfNGdFitter, 'nGdDyb2', sel)
+
+
+def dump_delayed_fits_all2():
+    for tag in TAGS:
+        dump_delayed_fits_all(tag)
+
+
+def dump_prompt_fits(fitclass, peakname, selname):
+    return dump_fits(fitclass, peakname, selname,
+                     get_prompt_rows)
+
+
+def dump_prompt_fits_all(tag):
+    for config in CONFIGS:
+        sel = f'{tag}@{config}'
+        dump_prompt_fits(MeanFitter, 'PromptE', sel)
+
+
+def dump_prompt_fits_all2():
+    for tag in TAGS:
+        dump_prompt_fits_all(tag)
 
 
 def dump_singles_fits(fitclass, peakname, selname):
@@ -171,7 +199,13 @@ def dump_singles_fits(fitclass, peakname, selname):
                      get_singles_rows)
 
 
-def dump_singles_fits_all():
-    for sel in SELS:
+def dump_singles_fits_all(tag):
+    for config in CONFIGS:
+        sel = f'{tag}@{config}'
         dump_singles_fits(K40Fitter, 'K40', sel)
         dump_singles_fits(Tl208Fitter, 'Tl208', sel)
+
+
+def dump_singles_fits_all2():
+    for tag in TAGS:
+        dump_singles_fits_all(tag)
