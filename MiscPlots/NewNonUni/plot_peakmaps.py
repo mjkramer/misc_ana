@@ -71,7 +71,7 @@ def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
 def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs):
     dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
            for config in CONFIGS]
-    if len(dfs[0] == 0):
+    if len(dfs[0]) == 0:
         raise NoDataException
     if autorange:
         vmin, vmax = get_extrema(dfs)

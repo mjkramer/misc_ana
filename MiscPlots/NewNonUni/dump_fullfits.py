@@ -40,7 +40,7 @@ def fit_ibd(fitter: Fitter, tree: R.TTree, branch):
 
 def get_ibd_row(branch, context):
     fitter, tree, site, det = context
-    peak, err, chi2ndf, success = fit_ibd(branch, fitter, tree)
+    peak, err, chi2ndf, success = fit_ibd(fitter, tree, branch)
 
     return {'site': site, 'det': det,
             'fit_peak': peak, 'fit_err': err,
@@ -169,3 +169,14 @@ def dump_singles_fits_all(tag):
 def dump_singles_fits_all2():
     for tag in TAGS:
         dump_singles_fits_all(tag)
+
+
+def dump_fits_all(tag):
+    dump_delayed_fits_all(tag)
+    dump_singles_fits_all(tag)
+    dump_prompt_fits_all(tag)
+
+
+def dump_fits_all2():
+    for tag in TAGS:
+       dump_fits_all(tag)

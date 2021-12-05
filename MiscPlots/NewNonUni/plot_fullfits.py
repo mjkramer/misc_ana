@@ -58,7 +58,7 @@ def plot_fullGrid(tag: str, peak: str):
 
     gfxdir = f'gfx/fullfits/{TAGS[tag]}'
     os.system(f'mkdir -p {gfxdir}')
-    for ext in ['pdf', 'png']:
+    for ext in ['png']:
         fig.savefig(f'{gfxdir}/fullfits_{peak}.{ext}')
 
 
@@ -67,6 +67,6 @@ def plot_fullGrid_all2(tag, /, **kwargs):
         plot_fullGrid(tag, peak, **kwargs)
 
 
-def plot_grid_all3(**kwargs):
+def plot_fullGrid_all3(**kwargs):
     for tag in TAGS:
         plot_fullGrid_all2(tag, **kwargs)

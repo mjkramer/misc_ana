@@ -167,10 +167,10 @@ def dump_delayed_fits(fitclass, peakname, selname):
 def dump_delayed_fits_all(tag):
     for config in CONFIGS:
         sel = f'{tag}@{config}'
-        dump_delayed_fits(DoubCrysNGdFitter, 'nGd', sel)
+        # dump_delayed_fits(DoubCrysNGdFitter, 'nGd', sel)
         dump_delayed_fits(DoubCrysPlusExpNGdFitter, 'nGdExp', sel)
-        dump_delayed_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
-        dump_delayed_fits(DybfNGdFitter, 'nGdDyb2', sel)
+        # dump_delayed_fits(MyDybfNGdFitter, 'nGdDyb1', sel)
+        # dump_delayed_fits(DybfNGdFitter, 'nGdDyb2', sel)
 
 
 def dump_delayed_fits_all2():

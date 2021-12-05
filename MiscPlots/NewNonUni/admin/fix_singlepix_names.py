@@ -34,6 +34,8 @@ def fix_names(sel: str, site: int):
             newname = name
         obj = src.Get(name)
         dest.cd()
+        if type(obj) is R.TTree:
+            obj = obj.CloneTree(-1, 'fast')
         obj.Write(newname)
 
     dest.Close()
