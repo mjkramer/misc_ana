@@ -22,10 +22,11 @@ def get_df(tag: str, config: str, peak: str):
 def plot_df(df, title, ylim=None, **kwargs):
     plt.errorbar(df["AD"], df['fit_peak'], yerr=df['fit_err'],
                  fmt='o', **kwargs)
-    plt.xlim(1.5, 8.5)
+    xmin = 2 if len(df) == 7 else 1
+    plt.xlim(xmin - 0.5, 8.5)
     if ylim:
         plt.ylim(*ylim)
-    plt.xticks(range(2, 9), df["label"])
+    plt.xticks(range(xmin, 9), df["label"])
     plt.ylabel("Peak location (MeV)")
     plt.title(title)
     plt.tight_layout()

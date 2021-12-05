@@ -19,15 +19,20 @@ def midZ(binZ):
     return 1e-3 * 0.5 * (DIVS_Z[binZ] + DIVS_Z[binZ - 1])
 
 
+class NoDataException(Exception):
+    pass
+
+
 def get_df(tag: str, config: str, site: int, det: int, peak: str,
            *, relGdLS=False):
-    full_df = pd.read_csv(f'data/peakmaps/{tag}@{config}/peaks_{peak}.csv')
+    csvpath = f'data/peakmaps/{tag}@{config}/peaks_{peak}.csv'
+    full_df = pd.read_csv(csvpath)
     assert isinstance(full_df, pd.DataFrame)
     df = full_df.query(f'site == {site} and det == {det}').copy() # type:ignore
     assert isinstance(df, pd.DataFrame)
     df["midR2"] = df["binR2"].map(midR2)
     df["midZ"] = df["binZ"].map(midZ)
-    if relGdLS:
+    if relGdLS and len(df) != 0:
         sub_df = df.query('binR2 <= 6 and binZ >= 2 and binZ <= 9')
         assert isinstance(sub_df, pd.DataFrame)
         avg = sub_df['fit_peak'].mean()
@@ -48,14 +53,15 @@ def plot_df(df, title, *, colorbar=False, **kwargs):
 
 
 def get_extrema(dfs):
+    dfs = [df for df in dfs if len(df) != 0]
     vmin = min(df['fit_peak'].min() for df in dfs)
     vmax = max(df['fit_peak'].max() for df in dfs)
     return vmin, vmax
 
 
 def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
-    sites = [1, 2, 2, 3, 3, 3, 3]
-    dets = [2, 1, 2, 1, 2, 3, 4]
+    sites = [1, 1, 2, 2, 3, 3, 3, 3]
+    dets = [1, 2, 1, 2, 1, 2, 3, 4]
     dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
            for config in CONFIGS
            for (site, det) in zip(sites, dets)]
@@ -65,6 +71,8 @@ def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
 def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs):
     dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
            for config in CONFIGS]
+    if len(dfs[0] == 0):
+        raise NoDataException
     if autorange:
         vmin, vmax = get_extrema(dfs)
         kwargs |= dict(vmin=vmin, vmax=vmax)
@@ -92,16 +100,19 @@ def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs)
 
 
 def plot_grid_all(tag, peak, /, **kwargs):
-    sites = [1, 2, 2, 3, 3, 3, 3]
-    dets = [2, 1, 2, 1, 2, 3, 4]
+    sites = [1, 1, 2, 2, 3, 3, 3, 3]
+    dets = [1, 2, 1, 2, 1, 2, 3, 4]
 
     vmin, vmax = get_global_extrema(tag, peak, relGdLS=True)
 
     gfxdir = ''                 # silence warning about being possibly unbound
     for site, det in zip(sites, dets):
-        gfxdir = plot_grid(tag, site, det, peak,
-                           relGdLS=True, colorbar=False, autorange=False,
-                           vmin=vmin, vmax=vmax, **kwargs)
+        try:
+            gfxdir = plot_grid(tag, site, det, peak,
+                               relGdLS=True, colorbar=False, autorange=False,
+                               vmin=vmin, vmax=vmax, **kwargs)
+        except NoDataException:
+            print(f'SKIPPING EH{site}-AD{det}')
 
     cbar = just_colorbar(vmin, vmax)
     cbar.savefig(f'{gfxdir}/colorbar.png')
