@@ -2,6 +2,7 @@
 
 import os
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -98,3 +99,11 @@ def plot_grid_all_all(relGdLS=False):
 def plot_grid_all_all_singles(relGdLS=False):
     for peak in ['K40', 'Tl208']:
         plot_grid_all(peak, relGdLS)
+
+
+def just_colorbar(vmin: float, vmax: float):
+    fig, ax = plt.subplots(figsize=(1.25, 9.6))
+    fig.subplots_adjust(top=1, bottom=0, right=0.65)
+    cmap = plt.rcParams['image.cmap']
+    norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax) # type:ignore
+    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), cax=ax) # type:ignore
