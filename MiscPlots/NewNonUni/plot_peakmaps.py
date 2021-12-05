@@ -37,11 +37,12 @@ def get_df(sel, site, det, peak, *, relGdLS=False):
     return df
 
 
-def plot_df(df, title, **kwargs):
+def plot_df(df, title, *, colorbar=False, **kwargs):
     piv = df.pivot_table(columns="midR2", index="midZ", values="fit_peak")
     plt.pcolormesh(piv.columns, piv.index, piv.values,
                    shading="nearest", **kwargs)
-    plt.colorbar()
+    if colorbar:
+        plt.colorbar()
     plt.xlabel("R$^2$ (m$^2$)")
     plt.ylabel("Z (m)")
     plt.title(title)
@@ -54,18 +55,22 @@ def get_extrema(dfs):
     return vmin, vmax
 
 
-def plot_grid(site, det, peak, relGdLS=False):
+def plot_grid(site, det, peak, *, relGdLS=False, autorange=False, **kwargs):
     dfs = [get_df(sel, site, det, peak, relGdLS=relGdLS) for sel in SELS]
-    vmin, vmax = get_extrema(dfs)
+    if autorange:
+        vmin, vmax = get_extrema(dfs)
+        kwargs |= dict(vmin=vmin, vmax=vmax)
 
-    fig, axs = plt.subplots(2, 2, figsize=(14.8, 9.6))
-    axs[1][1].set_axis_off()
+    fig: plt.Figure = plt.figure(figsize=(12.2, 9.6))
+    gs = fig.add_gridspec(4, 4)
+    axs = [fig.add_subplot(gs[r:r+2, c:c+2])
+           for (r, c) in [(0, 0), (0, 2), (2, 1)]]
 
-    for sel, df, ax in zip(SELS, dfs, axs.flatten()):
+    for sel, df, ax in zip(SELS, dfs, axs):
         plt.sca(ax)
         suffix = ' (rel. GdLS)' if relGdLS else ''
         title = f'{peak} peak ({CORRNAMES[sel]}), EH{site}-AD{det}{suffix}'
-        plot_df(df, title, vmin=vmin, vmax=vmax)
+        plot_df(df, title, **kwargs)
 
     fig.tight_layout()
 
@@ -82,7 +87,7 @@ def plot_grid_all(peak, relGdLS=False):
     dets = [2, 1, 2, 1, 2, 3, 4]
 
     for site, det in zip(sites, dets):
-        plot_grid(site, det, peak, relGdLS)
+        plot_grid(site, det, peak, relGdLS=relGdLS)
 
 
 def plot_grid_all_all(relGdLS=False):
