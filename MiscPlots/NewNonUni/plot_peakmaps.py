@@ -24,11 +24,13 @@ class NoDataException(Exception):
 
 
 def get_df(tag: str, config: str, site: int, det: int, peak: str,
-           *, relGdLS=False):
+           *, relGdLS=False, chi2max=None):
     csvpath = f'data/peakmaps/{tag}@{config}/peaks_{peak}.csv'
     full_df = pd.read_csv(csvpath)
     assert isinstance(full_df, pd.DataFrame)
-    df = full_df.query(f'site == {site} and det == {det}').copy() # type:ignore
+    chi2cond = f' and chi2ndf < {chi2max}' if chi2max else ''
+    query = f'site == {site} and det == {det}{chi2cond}'
+    df = full_df.query(query).copy() # type:ignore
     assert isinstance(df, pd.DataFrame)
     df["midR2"] = df["binR2"].map(midR2)
     df["midZ"] = df["binZ"].map(midZ)
@@ -68,8 +70,9 @@ def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
     return get_extrema(dfs)
 
 
-def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False, **kwargs):
-    dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
+def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False,
+              chi2max=None, **kwargs):
+    dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS, chi2max=chi2max)
            for config in CONFIGS]
     if len(dfs[0]) == 0:
         raise NoDataException
@@ -103,19 +106,21 @@ def plot_grid_all(tag, peak, /, **kwargs):
     sites = [1, 1, 2, 2, 3, 3, 3, 3]
     dets = [1, 2, 1, 2, 1, 2, 3, 4]
 
-    vmin, vmax = get_global_extrema(tag, peak, relGdLS=True)
+    # vmin, vmax = get_global_extrema(tag, peak, relGdLS=True)
 
-    gfxdir = ''                 # silence warning about being possibly unbound
+    # gfxdir = ''                 # silence warning about being possibly unbound
     for site, det in zip(sites, dets):
         try:
-            gfxdir = plot_grid(tag, site, det, peak,
-                               relGdLS=True, colorbar=False, autorange=False,
-                               vmin=vmin, vmax=vmax, **kwargs)
+            # gfxdir = plot_grid(tag, site, det, peak,
+            #                    relGdLS=True, colorbar=False, autorange=False,
+            #                    vmin=vmin, vmax=vmax, **kwargs)
+            plot_grid(tag, site, det, peak, colorbar=False,
+                      relGdLS=True, autorange=True, **kwargs)
         except NoDataException:
             print(f'SKIPPING EH{site}-AD{det}')
 
-    cbar = just_colorbar(vmin, vmax)
-    cbar.savefig(f'{gfxdir}/colorbar.png')
+    # cbar = just_colorbar(vmin, vmax)
+    # cbar.savefig(f'{gfxdir}/colorbar.png')
 
 
 def plot_grid_all2(tag, /, **kwargs):
