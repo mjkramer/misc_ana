@@ -14,7 +14,7 @@ def get_df(tag: str, config: str, peak: str):
     df = pd.read_csv(f'data/fullfits/{tag}@{config}/fullfits_{peak}.csv')
     assert isinstance(df, pd.DataFrame)
     df["AD"] = 2 * (df["site"] - 1) + df["det"]
-    df["label"] = [f'EH{site}-AD{det}'
+    df["label"] = [f'EH{site}\nAD{det}'
                    for (site, det) in zip(df['site'], df['det'])]
     return df
 

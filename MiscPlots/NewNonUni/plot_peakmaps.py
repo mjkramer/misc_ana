@@ -24,12 +24,11 @@ class NoDataException(Exception):
 
 
 def get_df(tag: str, config: str, site: int, det: int, peak: str,
-           *, relGdLS=False, chi2max=None):
+           *, relGdLS=False):
     csvpath = f'data/peakmaps/{tag}@{config}/peaks_{peak}.csv'
     full_df = pd.read_csv(csvpath)
     assert isinstance(full_df, pd.DataFrame)
-    chi2cond = f' and chi2ndf < {chi2max}' if chi2max else ''
-    query = f'site == {site} and det == {det}{chi2cond}'
+    query = f'site == {site} and det == {det}'
     df = full_df.query(query).copy() # type:ignore
     assert isinstance(df, pd.DataFrame)
     df["midR2"] = df["binR2"].map(midR2)
@@ -54,10 +53,13 @@ def plot_df(df, title, *, colorbar=False, **kwargs):
     plt.tight_layout()
 
 
-def get_extrema(dfs):
-    dfs = [df for df in dfs if len(df) != 0]
-    vmin = min(df['fit_peak'].min() for df in dfs)
-    vmax = max(df['fit_peak'].max() for df in dfs)
+def get_extrema(dfs, chi2max=None):
+    df = pd.concat(df for df in dfs if len(df) != 0)
+    if chi2max:
+        df = df.query(f'chi2ndf < {chi2max}')
+        assert isinstance(df, pd.DataFrame)
+    vmin = df['fit_peak'].min()
+    vmax = df['fit_peak'].max()
     return vmin, vmax
 
 
@@ -72,12 +74,12 @@ def get_global_extrema(tag: str, peak: str, *, relGdLS: bool):
 
 def plot_grid(tag, site, det, peak, *, relGdLS=False, autorange=False,
               chi2max=None, **kwargs):
-    dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS, chi2max=chi2max)
+    dfs = [get_df(tag, config, site, det, peak, relGdLS=relGdLS)
            for config in CONFIGS]
     if len(dfs[0]) == 0:
         raise NoDataException
     if autorange:
-        vmin, vmax = get_extrema(dfs)
+        vmin, vmax = get_extrema(dfs, chi2max)
         kwargs |= dict(vmin=vmin, vmax=vmax)
 
     fig: plt.Figure = plt.figure(figsize=(12.2, 9.6))
