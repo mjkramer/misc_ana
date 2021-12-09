@@ -8,10 +8,17 @@ using StatsBase
 pyplot(size = (700, 400), grid = false,
        framestyle = :box)
 
+# DATASETS =
+#     Dict("P17B" => "2021_02_03@delcut_third_6.000MeV@bcw",
+#          "All data" => "2021_02_03+v5v3v1@nominal@bcw",
+#          "Post-P17B" => "post17_v5v3v1@nominal@bcw")
 DATASETS =
-    Dict("P17B" => "2021_02_03@delcut_third_6.000MeV@bcw",
-         "All data" => "2021_02_03+v5v3v1@nominal@bcw",
-         "Post-P17B" => "post17_v5v3v1@nominal@bcw")
+    Dict("Alpha + nGd, P17B" => "p17b_v4_NL@test_newNonUni_alphas_ngd@bcw",
+         "Alphas only, P17B" =>  "p17b_v4_NL@test_newNonUni_alphas_only@bcw",
+         "No corr., P17B" =>  "p17b_v4_NL@test_newNonUni_off@bcw",
+         "Alpha + nGd, Post17" => "post17_v5v3v1_NL@test_newNonUni_alphas_ngd@bcw",
+         "Alphas only, Post17" =>  "post17_v5v3v1_NL@test_newNonUni_alphas_only@bcw",
+         "No corr., Post17" =>  "post17_v5v3v1_NL@test_newNonUni_off@bcw")
 
 inf2zero(a::AbstractArray) = [(isinf(x) ? zero(x) : x) for x in a]
 nan2zero(a::AbstractArray) = [(isnan(x) ? zero(x) : x) for x in a]
@@ -26,7 +33,7 @@ end
 
 function masscorr(det)
     tagconfig = first(DATASETS)[2] # all datasets have the same target masses
-    tm = read_theta13(8, tagconfig).target_mass
+    tm = read_theta13(7, tagconfig).target_mass
     return tm[det] / tm[1]
 end
 
@@ -124,6 +131,7 @@ function plot_ratios(dataset, desc, labels, divs)
     xticks!(eachindex(labels), labels)
     ylabel!("Ratio of IBD rates")
     title!("Relative IBD rates ($dataset)")
+    savefig("gfx/zoom_post_p17b/$(DATASETS[dataset]).pdf")
     display(current())
 end
 
@@ -157,9 +165,29 @@ function plot_ratios_zoom(dataset)
     plot_ratios(dataset, desc, labels, divs)
 end
 
+function plot_ratios_zoom_post17(dataset)
+    labels = ["AD3/AD8", "AD4/EH3", "AD5/EH3", "AD6/EH3", "AD7/EH3"]
+
+    df = sidebyside_data([7], DATASETS[dataset])
+
+    desc = [(df, [3], [4]),
+            (df, [5, 6, 7, 8], [5, 6, 7, 8])]
+
+    divs = [1.5]
+
+    plot_ratios(dataset, desc, labels, divs)
+end
+
 function plot_all_ratios()
     plot_ratios_full("P17B")
     plot_ratios_zoom("All data")
     plot_ratios_zoom("Post-P17B")
     plot_ratios_zoom("P17B")
+end
+
+function plot_all_ratios_newNonUni()
+    pre_sets = [k for k in keys(DATASETS) if findfirst("P17B", k) !== nothing]
+    post_sets = [k for k in keys(DATASETS) if findfirst("Post17", k) !== nothing]
+    plot_ratios_full.(pre_sets)
+    plot_ratios_zoom.(post_sets)
 end
