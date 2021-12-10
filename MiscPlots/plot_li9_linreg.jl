@@ -74,8 +74,9 @@ function plotpoints_nominal(site)
     # the same color.
     p = plot(legend=false, color_palette=[:blue])
     xs, ys = getpoints(site, Mode.Nominal)
-    scatter!(xs, ys)
-    line = fit(xs, ys, 1)
+    unc = [0.33, 0.32, 0.30][site] # from IbdSel/selector/stage2/Calculator.cc
+    scatter!(xs, ys, yerror=unc.*ys)
+    line = fit(xs, ys, 1, weights=(unc.*ys).^-2)
     plot!(xs, line.(xs))
     title!("Daily \$^9\$Li/\$^8\$ rate, 400.4 ms veto (EH$site)")
     xlabel!("Shower-muon threshold (PE)")
